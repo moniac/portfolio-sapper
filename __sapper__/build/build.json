@@ -1,0 +1,1 @@
+{"bundler":"rollup","shimport":"1.0.1","assets":{"main":"client.34ded89e.js"},"css":{"main":"main.850609924.css","chunks":{"index.svelte":["index.c4acc244.css"],"about.svelte":[],"blog/index.svelte":["index.196da702.css"],"blog/[slug].svelte":["[slug].2877f0cf.css"]}}}
