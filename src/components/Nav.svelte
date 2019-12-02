@@ -13,11 +13,6 @@
     max-height: 57px;
   }
 
-  ul {
-    margin: 0;
-    padding: 0;
-  }
-
   /* clearfix */
   ul::after {
     content: "";
@@ -66,7 +61,7 @@
 </style>
 
 <nav>
-  <ul>
+  <ul class="max-w-6xl mx-auto">
     <li>
       <a class:selected={segment === undefined} href=".">home</a>
     </li>
