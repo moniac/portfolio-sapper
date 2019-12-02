@@ -44,8 +44,9 @@
     </h1>
 
     <p>
-      Welcome to my portfolio. My name is Mohammed, but please call me Mo. On
-      this site, you can see some of my work.
+      Welcome to my portfolio. My name is Mohammed, but please call me Mo.
+      <br />
+      This site is still a work in progress...
     </p>
   </div>
 
@@ -65,7 +66,7 @@
 <main>
   <section>
     <ul>
-      <li>test</li>
+      <!-- <li>test</li> -->
     </ul>
   </section>
 </main>
