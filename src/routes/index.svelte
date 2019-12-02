@@ -51,10 +51,13 @@
 
   <Row flexDirection="column">
 
-    <img
-      alt="Image of Mohammed Mulazada"
-      style={`max-width:400px`}
-      src="mo.png" />
+    <picture>
+      <source srcset="g/mo-366.webp" type="image/webp" />
+      <img
+        alt="Image of Mohammed Mulazada"
+        style={`max-width:400px`}
+        src="mo.png" />
+    </picture>
     <img alt="" src={'shadow.png'} />
   </Row>
 </Row>

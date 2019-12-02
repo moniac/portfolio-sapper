@@ -1,6 +1,6 @@
 {
-  "name": "TODO",
-  "description": "TODO",
+  "name": "Mohammed",
+  "description": "Mohammed",
   "version": "0.0.1",
   "scripts": {
     "dev": "sapper dev",
@@ -14,7 +14,7 @@
     "build": "npm run build:tailwind && sapper export --legacy"
   },
   "dependencies": {
-    "compression": "^1.7.1",
+    "compression": "^1.7.4",
     "polka": "next",
     "sirv": "^0.4.0"
   },

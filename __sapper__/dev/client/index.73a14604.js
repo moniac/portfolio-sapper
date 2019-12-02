@@ -128,43 +128,61 @@ const file$1 = "src/routes/index.svelte";
 
 // (52:2) <Row flexDirection="column">
 function create_default_slot_1(ctx) {
+	let picture;
+	let source;
+	let t0;
 	let img0;
 	let img0_style_value;
 	let img0_src_value;
-	let t;
+	let t1;
 	let img1;
 	let img1_src_value;
 
 	const block = {
 		c: function create() {
+			picture = element("picture");
+			source = element("source");
+			t0 = space();
 			img0 = element("img");
-			t = space();
+			t1 = space();
 			img1 = element("img");
 			this.h();
 		},
 		l: function claim(nodes) {
-			img0 = claim_element(nodes, "IMG", { alt: true, style: true, src: true });
-			t = claim_space(nodes);
+			picture = claim_element(nodes, "PICTURE", {});
+			var picture_nodes = children(picture);
+			source = claim_element(picture_nodes, "SOURCE", { srcset: true, type: true });
+			t0 = claim_space(picture_nodes);
+			img0 = claim_element(picture_nodes, "IMG", { alt: true, style: true, src: true });
+			picture_nodes.forEach(detach_dev);
+			t1 = claim_space(nodes);
 			img1 = claim_element(nodes, "IMG", { alt: true, src: true });
 			this.h();
 		},
 		h: function hydrate() {
+			attr_dev(source, "srcset", "g/mo-366.webp");
+			attr_dev(source, "type", "image/webp");
+			add_location(source, file$1, 54, 6, 950);
 			attr_dev(img0, "alt", "Image of Mohammed Mulazada");
 			attr_dev(img0, "style", img0_style_value = `max-width:400px`);
 			if (img0.src !== (img0_src_value = "g/mo.png")) attr_dev(img0, "src", img0_src_value);
-			add_location(img0, file$1, 53, 4, 934);
+			add_location(img0, file$1, 55, 6, 1008);
+			add_location(picture, file$1, 53, 4, 934);
 			attr_dev(img1, "alt", "");
 			if (img1.src !== (img1_src_value = "shadow.png")) attr_dev(img1, "src", img1_src_value);
-			add_location(img1, file$1, 57, 4, 1038);
+			add_location(img1, file$1, 60, 4, 1133);
 		},
 		m: function mount(target, anchor) {
-			insert_dev(target, img0, anchor);
-			insert_dev(target, t, anchor);
+			insert_dev(target, picture, anchor);
+			append_dev(picture, source);
+			append_dev(picture, t0);
+			append_dev(picture, img0);
+			insert_dev(target, t1, anchor);
 			insert_dev(target, img1, anchor);
 		},
 		d: function destroy(detaching) {
-			if (detaching) detach_dev(img0);
-			if (detaching) detach_dev(t);
+			if (detaching) detach_dev(picture);
+			if (detaching) detach_dev(t1);
 			if (detaching) detach_dev(img1);
 		}
 	};
@@ -358,10 +376,10 @@ function create_fragment$1(ctx) {
 		},
 		h: function hydrate() {
 			document.title = "Home | Portfolio of Mohammed Mulazada";
-			add_location(li, file$1, 64, 6, 1123);
-			add_location(ul, file$1, 63, 4, 1112);
-			add_location(section, file$1, 62, 2, 1098);
-			add_location(main, file$1, 61, 0, 1089);
+			add_location(li, file$1, 67, 6, 1218);
+			add_location(ul, file$1, 66, 4, 1207);
+			add_location(section, file$1, 65, 2, 1193);
+			add_location(main, file$1, 64, 0, 1184);
 		},
 		m: function mount(target, anchor) {
 			insert_dev(target, t0, anchor);
@@ -426,4 +444,4 @@ class Routes extends SvelteComponentDev {
 }
 
 export default Routes;
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguMTg4NTk2NWEuanMiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9jb21wb25lbnRzL1Jvdy5zdmVsdGUiLCIuLi8uLi8uLi9zcmMvcm91dGVzL2luZGV4LnN2ZWx0ZSJdLCJzb3VyY2VzQ29udGVudCI6WyI8c2NyaXB0PlxuICBleHBvcnQgbGV0IGZsZXhEaXJlY3Rpb24gPSBcInJvd1wiO1xuICBsZXQganVzdGlmeUNvbnRlbnQgPSBcInNwYWNlLWFyb3VuZFwiO1xuPC9zY3JpcHQ+XG5cbjxzdHlsZT5cbiAgLlJvdyB7XG4gICAgZGlzcGxheTogZmxleDtcbiAgICBhbGlnbi1pdGVtczogY2VudGVyO1xuICB9XG48L3N0eWxlPlxuXG48ZGl2XG4gIGNsYXNzPVwiUm93XCJcbiAgc3R5bGU9e2BmbGV4LWRpcmVjdGlvbjogJHtmbGV4RGlyZWN0aW9ufTsganVzdGlmeS1jb250ZW50OiAke2p1c3RpZnlDb250ZW50fWB9PlxuICA8c2xvdCAvPlxuPC9kaXY+XG4iLCI8c2NyaXB0PlxuICBpbXBvcnQgUm93IGZyb20gXCIuLi9jb21wb25lbnRzL1Jvdy5zdmVsdGVcIjtcbjwvc2NyaXB0PlxuXG48c3R5bGU+XG4gIGgxIHtcbiAgICBmb250LXNpemU6IDIuOGVtO1xuICAgIHRleHQtdHJhbnNmb3JtOiB1cHBlcmNhc2U7XG4gICAgZm9udC13ZWlnaHQ6IDcwMDtcbiAgICBtYXJnaW46IDAgMCAwLjVlbSAwO1xuICB9XG5cbiAgQG1lZGlhIChtaW4td2lkdGg6IDQ4MHB4KSB7XG4gICAgaDEge1xuICAgICAgZm9udC1zaXplOiA5LjM3NWVtO1xuICAgIH1cbiAgfVxuXG4gIGgxIHtcbiAgICBiYWNrZ3JvdW5kLWltYWdlOiBsaW5lYXItZ3JhZGllbnQoMTgwZGVnLCAjNWI1Y2YxLCAjMjFiM2ZmKTtcbiAgICAtd2Via2l0LWJhY2tncm91bmQtY2xpcDogdGV4dDtcbiAgICBiYWNrZ3JvdW5kLWNsaXA6IHRleHQ7XG4gICAgLXdlYmtpdC10ZXh0LWZpbGwtY29sb3I6IHRyYW5zcGFyZW50O1xuICAgIGxpbmUtaGVpZ2h0OiAwLjk7XG4gICAgbWFyZ2luLWxlZnQ6IC02cHg7XG4gIH1cblxuICAucm9sZSB7XG4gICAgZm9udC1zaXplOiA0MHB4O1xuICAgIG1hcmdpbi1ib3R0b206IDE2cHg7XG4gIH1cbjwvc3R5bGU+XG5cbjxzdmVsdGU6aGVhZD5cbiAgPHRpdGxlPkhvbWUgfCBQb3J0Zm9saW8gb2YgTW9oYW1tZWQgTXVsYXphZGE8L3RpdGxlPlxuPC9zdmVsdGU6aGVhZD5cbjxSb3c+XG4gIDxkaXY+XG4gICAgPHAgY2xhc3M9XCJyb2xlXCI+RnJvbnQtRW5kPC9wPlxuICAgIDxoMT5cbiAgICAgIERldmVsby1cbiAgICAgIDxiciAvPlxuICAgICAgcGVyXG4gICAgPC9oMT5cblxuICAgIDxwPlxuICAgICAgV2VsY29tZSB0byBteSBwb3J0Zm9saW8uIE15IG5hbWUgaXMgTW9oYW1tZWQsIGJ1dCBwbGVhc2UgY2FsbCBtZSBNby4gT25cbiAgICAgIHRoaXMgc2l0ZSwgeW91IGNhbiBzZWUgc29tZSBvZiBteSB3b3JrLlxuICAgIDwvcD5cbiAgPC9kaXY+XG5cbiAgPFJvdyBmbGV4RGlyZWN0aW9uPVwiY29sdW1uXCI+XG5cbiAgICA8aW1nXG4gICAgICBhbHQ9XCJJbWFnZSBvZiBNb2hhbW1lZCBNdWxhemFkYVwiXG4gICAgICBzdHlsZT17YG1heC13aWR0aDo0MDBweGB9XG4gICAgICBzcmM9XCJtby5wbmdcIiAvPlxuICAgIDxpbWcgYWx0PVwiXCIgc3JjPXsnc2hhZG93LnBuZyd9IC8+XG4gIDwvUm93PlxuPC9Sb3c+XG5cbjxtYWluPlxuICA8c2VjdGlvbj5cbiAgICA8dWw+XG4gICAgICA8bGk+dGVzdDwvbGk+XG4gICAgPC91bD5cbiAgPC9zZWN0aW9uPlxuPC9tYWluPlxuIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7aUZBYzRCLEdBQWEsNENBQXNCLEdBQWM7Ozs7Ozs7Ozs7Ozs7Ozs7OzhIQUFqRCxHQUFhLDRDQUFzQixHQUFjOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O09BYmhFLGFBQWEsR0FBRyxLQUFLO0tBQzVCLGNBQWMsR0FBRyxjQUFjOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O3NDQ3VEaEIsWUFBWTs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OyJ9
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguNzNhMTQ2MDQuanMiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9jb21wb25lbnRzL1Jvdy5zdmVsdGUiLCIuLi8uLi8uLi9zcmMvcm91dGVzL2luZGV4LnN2ZWx0ZSJdLCJzb3VyY2VzQ29udGVudCI6WyI8c2NyaXB0PlxuICBleHBvcnQgbGV0IGZsZXhEaXJlY3Rpb24gPSBcInJvd1wiO1xuICBsZXQganVzdGlmeUNvbnRlbnQgPSBcInNwYWNlLWFyb3VuZFwiO1xuPC9zY3JpcHQ+XG5cbjxzdHlsZT5cbiAgLlJvdyB7XG4gICAgZGlzcGxheTogZmxleDtcbiAgICBhbGlnbi1pdGVtczogY2VudGVyO1xuICB9XG48L3N0eWxlPlxuXG48ZGl2XG4gIGNsYXNzPVwiUm93XCJcbiAgc3R5bGU9e2BmbGV4LWRpcmVjdGlvbjogJHtmbGV4RGlyZWN0aW9ufTsganVzdGlmeS1jb250ZW50OiAke2p1c3RpZnlDb250ZW50fWB9PlxuICA8c2xvdCAvPlxuPC9kaXY+XG4iLCI8c2NyaXB0PlxuICBpbXBvcnQgUm93IGZyb20gXCIuLi9jb21wb25lbnRzL1Jvdy5zdmVsdGVcIjtcbjwvc2NyaXB0PlxuXG48c3R5bGU+XG4gIGgxIHtcbiAgICBmb250LXNpemU6IDIuOGVtO1xuICAgIHRleHQtdHJhbnNmb3JtOiB1cHBlcmNhc2U7XG4gICAgZm9udC13ZWlnaHQ6IDcwMDtcbiAgICBtYXJnaW46IDAgMCAwLjVlbSAwO1xuICB9XG5cbiAgQG1lZGlhIChtaW4td2lkdGg6IDQ4MHB4KSB7XG4gICAgaDEge1xuICAgICAgZm9udC1zaXplOiA5LjM3NWVtO1xuICAgIH1cbiAgfVxuXG4gIGgxIHtcbiAgICBiYWNrZ3JvdW5kLWltYWdlOiBsaW5lYXItZ3JhZGllbnQoMTgwZGVnLCAjNWI1Y2YxLCAjMjFiM2ZmKTtcbiAgICAtd2Via2l0LWJhY2tncm91bmQtY2xpcDogdGV4dDtcbiAgICBiYWNrZ3JvdW5kLWNsaXA6IHRleHQ7XG4gICAgLXdlYmtpdC10ZXh0LWZpbGwtY29sb3I6IHRyYW5zcGFyZW50O1xuICAgIGxpbmUtaGVpZ2h0OiAwLjk7XG4gICAgbWFyZ2luLWxlZnQ6IC02cHg7XG4gIH1cblxuICAucm9sZSB7XG4gICAgZm9udC1zaXplOiA0MHB4O1xuICAgIG1hcmdpbi1ib3R0b206IDE2cHg7XG4gIH1cbjwvc3R5bGU+XG5cbjxzdmVsdGU6aGVhZD5cbiAgPHRpdGxlPkhvbWUgfCBQb3J0Zm9saW8gb2YgTW9oYW1tZWQgTXVsYXphZGE8L3RpdGxlPlxuPC9zdmVsdGU6aGVhZD5cbjxSb3c+XG4gIDxkaXY+XG4gICAgPHAgY2xhc3M9XCJyb2xlXCI+RnJvbnQtRW5kPC9wPlxuICAgIDxoMT5cbiAgICAgIERldmVsby1cbiAgICAgIDxiciAvPlxuICAgICAgcGVyXG4gICAgPC9oMT5cblxuICAgIDxwPlxuICAgICAgV2VsY29tZSB0byBteSBwb3J0Zm9saW8uIE15IG5hbWUgaXMgTW9oYW1tZWQsIGJ1dCBwbGVhc2UgY2FsbCBtZSBNby4gT25cbiAgICAgIHRoaXMgc2l0ZSwgeW91IGNhbiBzZWUgc29tZSBvZiBteSB3b3JrLlxuICAgIDwvcD5cbiAgPC9kaXY+XG5cbiAgPFJvdyBmbGV4RGlyZWN0aW9uPVwiY29sdW1uXCI+XG5cbiAgICA8cGljdHVyZT5cbiAgICAgIDxzb3VyY2Ugc3Jjc2V0PVwiZy9tby0zNjYud2VicFwiIHR5cGU9XCJpbWFnZS93ZWJwXCIgLz5cbiAgICAgIDxpbWdcbiAgICAgICAgYWx0PVwiSW1hZ2Ugb2YgTW9oYW1tZWQgTXVsYXphZGFcIlxuICAgICAgICBzdHlsZT17YG1heC13aWR0aDo0MDBweGB9XG4gICAgICAgIHNyYz1cIm1vLnBuZ1wiIC8+XG4gICAgPC9waWN0dXJlPlxuICAgIDxpbWcgYWx0PVwiXCIgc3JjPXsnc2hhZG93LnBuZyd9IC8+XG4gIDwvUm93PlxuPC9Sb3c+XG5cbjxtYWluPlxuICA8c2VjdGlvbj5cbiAgICA8dWw+XG4gICAgICA8bGk+dGVzdDwvbGk+XG4gICAgPC91bD5cbiAgPC9zZWN0aW9uPlxuPC9tYWluPlxuIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7aUZBYzRCLEdBQWEsNENBQXNCLEdBQWM7Ozs7Ozs7Ozs7Ozs7Ozs7OzhIQUFqRCxHQUFhLDRDQUFzQixHQUFjOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O09BYmhFLGFBQWEsR0FBRyxLQUFLO0tBQzVCLGNBQWMsR0FBRyxjQUFjOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O3NDQzBEaEIsWUFBWTs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OyJ9
