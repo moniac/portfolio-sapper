@@ -29,7 +29,6 @@ export default {
         "process.env.NODE_ENV": JSON.stringify(mode)
       }),
       svelte({
-        generate: "dom",
         dev,
         hydratable: true,
         emitCss: true,
