@@ -11,12 +11,6 @@
     white-space: normal;
   }
 
-  @media (min-width: 768px) {
-    h1 {
-      font-size: 9.375em;
-    }
-  }
-
   h1 {
     background-image: linear-gradient(180deg, #5b5cf1, #21b3ff);
     -webkit-background-clip: text;
@@ -40,9 +34,26 @@
     animation: hover 4s ease infinite alternate-reverse;
   }
 
+  .avatar img,
+  .avatar source {
+    max-width: 200px;
+  }
+
   .shadow {
     animation: hoverShadow 4s ease infinite alternate-reverse;
     box-shadow: none;
+    max-width: 200px;
+  }
+
+  @media (min-width: 768px) {
+    h1 {
+      font-size: 9.375em;
+    }
+
+    .avatar img,
+    .avatar source {
+      max-width: 400px;
+    }
   }
 
   @keyframes hover {
@@ -90,10 +101,7 @@
   <Row flexDirection="column">
     <picture class="avatar">
       <source srcset="g/mo-366.webp" type="image/webp" />
-      <img
-        alt="Image of Mohammed Mulazada"
-        style={`max-width:400px`}
-        src="mo.png" />
+      <img alt="Image of Mohammed Mulazada" src="mo.png" />
     </picture>
     <img class="shadow" alt="" src={'shadow.png'} />
   </Row>

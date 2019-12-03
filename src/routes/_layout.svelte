@@ -68,6 +68,6 @@
 
 <Nav {segment} />
 
-<main class="container max-w-6xl mx-auto pt-16">
+<main class="container max-w-6xl mx-auto py-16">
   <slot />
 </main>
