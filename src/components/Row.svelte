@@ -1,6 +1,6 @@
 <script>
   export let flexDirection = "row";
-  let justifyContent = "space-around";
+  export let justifyContent = "space-around";
 </script>
 
 <style>

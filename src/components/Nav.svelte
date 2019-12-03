@@ -1,6 +1,16 @@
 <script>
   export let segment;
   function toggle() {
+    const localValue = localStorage.getItem("colorMode");
+
+    if (localValue === "dark") {
+      localStorage.setItem("colorMode", "light");
+    }
+
+    if (localValue === "light") {
+      localStorage.setItem("colorMode", "dark");
+    }
+
     window.document.body.classList.toggle("dark-mode");
   }
 </script>
