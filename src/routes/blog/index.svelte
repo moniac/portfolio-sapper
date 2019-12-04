@@ -10,6 +10,7 @@
 
 <script>
   export let posts;
+  import GradientHead from "../../components/GradientHeading.svelte";
 </script>
 
 <style>
@@ -23,7 +24,7 @@
   <title>Blog</title>
 </svelte:head>
 
-<h1>Recent posts</h1>
+<GradientHead>Recent posts</GradientHead>
 
 <ul>
   {#each posts as post}
@@ -32,7 +33,9 @@
 				the user hovers over the link or taps it, instead of
 				waiting for the 'click' event -->
     <li>
-      <a rel="prefetch" href="blog/{post.slug}">{post.title}</a>
+      <a class="underline" rel="prefetch" href="blog/{post.slug}">
+        {post.title}
+      </a>
     </li>
   {/each}
 </ul>

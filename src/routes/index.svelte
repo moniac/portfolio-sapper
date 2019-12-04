@@ -1,5 +1,6 @@
 <script>
   import Row from "../components/Row.svelte";
+  import GradientHeading from "../components/GradientHeading.svelte";
 </script>
 
 <style>
@@ -20,10 +21,6 @@
     margin-left: -6px;
     transition: background-image 225ms ease;
     -webkit-animation: hue 10s infinite alternate;
-  }
-
-  :global(.dark-mode h1) {
-    background-image: linear-gradient(to bottom, #f15b74, #ff6021);
   }
 
   .role {
@@ -95,11 +92,11 @@
   flex-row justify-between flex-wrap">
   <div>
     <p class="role">Front-End</p>
-    <h1>
+    <GradientHeading depth={1}>
       Dev-
       <br />
       eloper
-    </h1>
+    </GradientHeading>
 
     <p>
       Welcome to my portfolio. My name is Mohammed, but please call me Mo.
