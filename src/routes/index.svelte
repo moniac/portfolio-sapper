@@ -19,6 +19,7 @@
     line-height: 0.9;
     margin-left: -6px;
     transition: background-image 225ms ease;
+    -webkit-animation: hue 10s infinite alternate;
   }
 
   :global(.dark-mode h1) {
@@ -53,6 +54,15 @@
     .avatar img,
     .avatar source {
       max-width: 400px;
+    }
+  }
+
+  @-webkit-keyframes hue {
+    from {
+      -webkit-filter: hue-rotate(0deg);
+    }
+    to {
+      -webkit-filter: hue-rotate(-20deg);
     }
   }
 
