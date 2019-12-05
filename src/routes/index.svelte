@@ -25,7 +25,6 @@
 
   .role {
     font-size: 40px;
-    margin-bottom: 16px;
   }
 
   .avatar {
@@ -54,15 +53,6 @@
     }
   }
 
-  @-webkit-keyframes hue {
-    from {
-      -webkit-filter: hue-rotate(0deg);
-    }
-    to {
-      -webkit-filter: hue-rotate(-20deg);
-    }
-  }
-
   @keyframes hover {
     0% {
       transform: translateY(0%);
@@ -88,8 +78,8 @@
   <title>Home | Portfolio of Mohammed Mulazada</title>
 </svelte:head>
 <div
-  class="flex flex-col-reverse items-center px-6 justify-center lg:flex-row
-  flex-row justify-between flex-wrap">
+  class="flex flex-col-reverse items-center p-6 lg:px-4 lg:py-32 justify-center
+  lg:flex-row flex-row justify-between flex-wrap">
   <div>
     <p class="role">Front-End</p>
     <GradientHeading depth={1}>

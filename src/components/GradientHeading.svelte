@@ -10,18 +10,25 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
     line-height: 0.9;
-    margin-left: -6px;
     transition: background-image 225ms ease;
-    -webkit-animation: hue 10s infinite alternate;
+    animation: hue 10s infinite alternate;
     text-transform: uppercase;
     font-weight: 700;
-    margin: 0 0 0.5em 0;
     white-space: normal;
     font-size: 4.8em;
   }
 
   :global(.dark-mode .GradientHeading) {
     background-image: linear-gradient(to bottom, #f15b74, #ff6021);
+  }
+
+  @keyframes hue {
+    from {
+      -webkit-filter: hue-rotate(0deg);
+    }
+    to {
+      -webkit-filter: hue-rotate(-20deg);
+    }
   }
 
   @media (min-width: 768px) {
@@ -32,7 +39,7 @@
 </style>
 
 {#if depth === 1}
-  <h1 class="GradientHeading h{depth} {className}">
+  <h1 class="GradientHeading h{depth} {className} -ml-1 mb-4 lg:mb-16 lg:-ml-2">
     <slot />
   </h1>
 {:else}
