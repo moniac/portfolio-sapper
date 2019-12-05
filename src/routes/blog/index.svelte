@@ -10,7 +10,7 @@
 
 <script>
   export let posts;
-  import GradientHead from "../../components/GradientHeading.svelte";
+  import GradientHeading from "../../components/GradientHeading.svelte";
 </script>
 
 <style>
@@ -24,7 +24,7 @@
   <title>Blog</title>
 </svelte:head>
 
-<GradientHead>Recent posts</GradientHead>
+<GradientHeading>Recent posts</GradientHeading>
 
 <ul>
   {#each posts as post}

@@ -1,5 +1,5 @@
 <script>
-  export const depth = 1;
+  export let depth = 1;
   export let className = "";
 </script>
 
