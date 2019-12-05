@@ -32,7 +32,7 @@
     font-weight: 500;
   }
 
-  .content :global(pre) {
+/*   .content :global(pre) {
     background-color: #f9f9f9;
     box-shadow: inset 1px 1px 5px rgba(0, 0, 0, 0.05);
     padding: 0.5em;
@@ -51,9 +51,13 @@
 
   .content :global(li) {
     margin: 0 0 0.5em 0;
-  }
-	
-code[class*="language-"],
+  } */
+</style>
+
+<svelte:head>
+  <title>{post.title}</title>
+<style>
+	code[class*="language-"],
 pre[class*="language-"] {
 	color: #f8f8f2;
 	background: none;
@@ -170,10 +174,7 @@ pre[class*="language-"] {
 .token.entity {
 	cursor: help;
 }
-</style>
-
-<svelte:head>
-  <title>{post.title}</title>
+	</style
 </svelte:head>
 
 <GradientHeading>{post.title}</GradientHeading>
