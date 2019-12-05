@@ -56,6 +56,7 @@
 
 <svelte:head>
   <title>{post.title}</title>
+  <link href="themes/prism.css" rel="stylesheet" />
 </svelte:head>
 
 <GradientHeading>{post.title}</GradientHeading>
