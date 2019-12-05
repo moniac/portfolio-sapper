@@ -80,6 +80,14 @@
       clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);
     }
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wave1,
+    .wave2,
+    .square {
+      animation: none;
+    }
+  }
 </style>
 
 <svelte:head>
@@ -97,8 +105,8 @@
   </div>
 
   <figure class="waves">
-    <img class="wave1" src="wave1.svg" />
-    <img class="wave2" src="wave2.svg" />
+    <img class="wave1" alt="" src="wave1.svg" />
+    <img class="wave2" alt="" src="wave2.svg" />
   </figure>
 
   <div class="figure-holder">
