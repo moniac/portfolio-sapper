@@ -58,7 +58,7 @@
 </style>
 
 <nav>
-  <ul class="max-w-6xl mx-auto">
+  <ul class="px-4">
     <li>
       <a class:selected={segment === undefined} href=".">Home</a>
     </li>

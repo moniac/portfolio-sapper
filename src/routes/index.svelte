@@ -13,17 +13,22 @@
 
   .wave1 {
     position: absolute;
-    bottom: -30%;
+    bottom: -40%;
     width: 100%;
     animation: wave 4s ease infinite alternate;
   }
 
   .wave2 {
     position: absolute;
-    bottom: -30%;
+    bottom: -40%;
     width: 100%;
     animation: wave 2s ease infinite alternate, hue 5s ease infinite;
     animation-delay: 0.2s;
+  }
+
+  .intro {
+    position: absolute;
+    bottom: 10%;
   }
 
   .figure-holder {
@@ -79,6 +84,10 @@
     header {
       clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);
     }
+
+    .intro {
+      bottom: 50%;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -96,12 +105,17 @@
 
 <header class="h-full">
 
-  <div class="text-white">
-    <h1 class="text-4xl">
+  <div class="px-10 intro text-white">
+    <h1 class="text-4xl leading-none mb-4">
       <span class="font-bold text-6xl">Welcome</span>
       <br />
       to my portfolio
     </h1>
+    <p class="max-w-lg">
+      I am Mohammed Mulazada, a Front-End Developer based in Amsterdam. With a
+      passion for all things web, I am looking for challenges and new things to
+      learn each and every day.
+    </p>
   </div>
 
   <figure class="waves">
