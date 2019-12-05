@@ -35,6 +35,7 @@
 
 <svelte:head>
   <title>{post.title}</title>
+	
   <style>
 	code[class*="language-"],
 pre[class*="language-"] {
