@@ -4,72 +4,80 @@
 </script>
 
 <style>
-  h1 {
-    font-size: 4.8em;
-    text-transform: uppercase;
-    font-weight: 700;
-    margin: 0 0 0.5em 0;
-    white-space: normal;
+  header {
+    background-image: linear-gradient(225deg, #010220 0%, #000000 100%);
+    height: 80vh;
+    overflow: hidden;
+    position: relative;
   }
 
-  h1 {
-    background-image: linear-gradient(180deg, #5b5cf1, #21b3ff);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    line-height: 0.9;
-    margin-left: -6px;
-    transition: background-image 225ms ease;
-    -webkit-animation: hue 10s infinite alternate;
+  .wave1 {
+    position: absolute;
+    bottom: -30%;
+    width: 100%;
+    animation: wave 4s ease infinite alternate;
   }
 
-  .role {
-    font-size: 40px;
+  .wave2 {
+    position: absolute;
+    bottom: -30%;
+    width: 100%;
+    animation: wave 2s ease infinite alternate, hue 5s ease infinite;
+    animation-delay: 0.2s;
   }
 
-  .avatar {
-    animation: hover 4s ease infinite alternate-reverse;
+  .figure-holder {
+    position: absolute;
+    right: 30%;
+    top: 30%;
   }
 
-  .avatar img,
-  .avatar source {
-    max-width: 200px;
+  .square {
+    height: 82px;
+    width: 82px;
+    opacity: 0.4;
+    transform: rotate(45deg);
+    border: 10px solid #ffffff;
+    box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+    filter: blur(8px);
+    animation: rotate 8s linear infinite;
   }
 
-  .shadow {
-    animation: hoverShadow 4s ease infinite alternate-reverse;
-    box-shadow: none;
-    max-width: 200px;
+  .waves {
+    opacity: 0.6;
   }
 
-  @media (min-width: 768px) {
-    h1 {
-      font-size: 9.375em;
+  @keyframes rotate {
+    from {
+      transform: rotate(0);
     }
-
-    .avatar img,
-    .avatar source {
-      max-width: 400px;
+    to {
+      transform: rotate(1turn);
     }
   }
 
-  @keyframes hover {
+  @keyframes hue {
+    from {
+      -webkit-filter: hue-rotate(0deg);
+    }
+    to {
+      -webkit-filter: hue-rotate(-360deg);
+    }
+  }
+
+  @keyframes wave {
     0% {
       transform: translateY(0%);
     }
 
     100% {
-      transform: translateY(2%);
+      transform: translateY(-5%);
     }
   }
 
-  @keyframes hoverShadow {
-    0% {
-      transform: scale(1);
-    }
-
-    100% {
-      transform: scale(1.2);
+  @media (min-width: 768px) {
+    header {
+      clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);
     }
   }
 </style>
@@ -77,37 +85,23 @@
 <svelte:head>
   <title>Home | Portfolio of Mohammed Mulazada</title>
 </svelte:head>
-<div
-  class="flex flex-col-reverse items-center p-6 lg:px-4 lg:py-32 justify-center
-  lg:flex-row flex-row justify-between flex-wrap">
-  <div>
-    <p class="role">Front-End</p>
-    <GradientHeading depth={1}>
-      Dev-
-      <br />
-      eloper
-    </GradientHeading>
 
-    <p>
-      Welcome to my portfolio. My name is Mohammed, but please call me Mo.
+<header class="h-full">
+
+  <div class="text-white">
+    <h1 class="text-4xl">
+      <span class="font-bold text-6xl">Welcome</span>
       <br />
-      This site is still a work in progress...
-    </p>
+      to my portfolio
+    </h1>
   </div>
 
-  <Row flexDirection="column">
-    <picture class="avatar">
-      <source srcset="g/mo-366.webp" type="image/webp" />
-      <img alt="Image of Mohammed Mulazada" src="mo.png" />
-    </picture>
-    <img class="shadow" alt="" src={'shadow.png'} />
-  </Row>
-</div>
+  <figure class="waves">
+    <img class="wave1" src="wave1.svg" />
+    <img class="wave2" src="wave2.svg" />
+  </figure>
 
-<main>
-  <section>
-    <ul>
-      <!-- <li>test</li> -->
-    </ul>
-  </section>
-</main>
+  <div class="figure-holder">
+    <figure class="square" />
+  </div>
+</header>

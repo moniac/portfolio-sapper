@@ -1,18 +1,5 @@
 <script>
   export let segment;
-  function toggle() {
-    const localValue = localStorage.getItem("colorMode");
-
-    if (localValue === "dark") {
-      localStorage.setItem("colorMode", "light");
-    }
-
-    if (localValue === "light") {
-      localStorage.setItem("colorMode", "dark");
-    }
-
-    window.document.body.classList.toggle("dark-mode");
-  }
 </script>
 
 <style>
@@ -80,10 +67,6 @@
 		     the blog data when we hover over the link or tap it on a touchscreen -->
     <li>
       <a rel="prefetch" class:selected={segment === 'blog'} href="blog">Blog</a>
-    </li>
-
-    <li class="toggle">
-      <button on:click={toggle}>🌓</button>
     </li>
   </ul>
 </nav>

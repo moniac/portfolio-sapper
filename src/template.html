@@ -7,17 +7,6 @@
 
     %sapper.base%
 
-    <script>
-      window.addEventListener("DOMContentLoaded", e => {
-        const localValue = localStorage.getItem("colorMode");
-
-        if (localValue === "dark") {
-          e.target.body.className = "dark-mode";
-          return;
-        }
-      });
-    </script>
-
     <link rel="stylesheet" href="global.css" />
     <link rel="stylesheet" href="index.css" />
 
