@@ -52,6 +52,16 @@
     opacity: 0.6;
   }
 
+  @media (min-width: 768px) {
+    header {
+      clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);
+    }
+
+    .intro {
+      bottom: 50%;
+    }
+  }
+
   @keyframes rotate {
     from {
       transform: rotate(0);
@@ -80,16 +90,6 @@
     }
   }
 
-  @media (min-width: 768px) {
-    header {
-      clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);
-    }
-
-    .intro {
-      bottom: 50%;
-    }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .wave1,
     .wave2,
@@ -104,7 +104,6 @@
 </svelte:head>
 
 <header class="h-full">
-
   <div class="px-10 intro text-white">
     <h1 class="text-4xl leading-none mb-4">
       <span class="font-bold text-6xl">Welcome</span>
@@ -127,3 +126,11 @@
     <figure class="square" />
   </div>
 </header>
+
+<main class="px-10 py-16">
+  <GradientHeading depth={2}>
+    My
+    <br />
+    work
+  </GradientHeading>
+</main>

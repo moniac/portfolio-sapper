@@ -31,6 +31,35 @@
     font-size: 1.4em;
     font-weight: 500;
   }
+
+  :global(table, caption, tbody, tfoot, thead, tr, th, td) {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+  }
+  :global(table) {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+
+  :global(table) {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  :global(tr) {
+    border-bottom: 1px solid #ccc;
+  }
+
+  :global(th) {
+    font-weight: bold;
+  }
+  :global(th, td) {
+    text-align: left;
+    padding: 4px;
+  }
 </style>
 
 <svelte:head>

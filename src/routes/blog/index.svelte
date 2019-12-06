@@ -3,7 +3,6 @@
     return this.fetch(`blog.json`)
       .then(r => r.json())
       .then(posts => {
-        console.log(posts);
         return { posts };
       });
   }
@@ -40,10 +39,14 @@
 				the user hovers over the link or taps it, instead of
 				waiting for the 'click' event -->
       <li>
-        <a class="underline" rel="prefetch" href="blog/{post.slug}">
+        <a class="underline" rel="prefetch" href="blog/{post.slug}/">
           {post.title}
         </a>
-        <summary class="italic">{post.summary}</summary>
+        <summary class="italic">
+          {post.summary}
+          <br />
+          {post.readingTime}
+        </summary>
       </li>
     {/each}
   </ul>
