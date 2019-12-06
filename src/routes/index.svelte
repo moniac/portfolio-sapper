@@ -13,14 +13,14 @@
 
   .wave1 {
     position: absolute;
-    bottom: -40%;
+    bottom: -30%;
     width: 100%;
     animation: wave 4s ease infinite alternate;
   }
 
   .wave2 {
     position: absolute;
-    bottom: -40%;
+    bottom: -20%;
     width: 100%;
     animation: wave 2s ease infinite alternate, hue 5s ease infinite;
     animation-delay: 0.2s;
