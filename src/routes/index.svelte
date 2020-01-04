@@ -52,6 +52,15 @@
     opacity: 0.6;
   }
 
+  .logo_container {
+    max-height: 52px;
+    display: flex;
+  }
+
+  :global(.logo_container > img) {
+    max-height: 52px;
+  }
+
   @media (min-width: 768px) {
     header {
       clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);
@@ -104,6 +113,13 @@
 </svelte:head>
 
 <header class="h-full">
+  <a href="/" class="logo_container px-10 mt-10">
+    <img src="mo_logo.svg" alt="logo from moniac" />
+    <aside class="text-white">
+      <h1>Mohammed Mulazada</h1>
+      <h2>Front-end Developer</h2>
+    </aside>
+  </a>
   <div class="px-10 intro text-white">
     <h1 class="text-4xl leading-none mb-4">
       <span class="font-bold text-6xl">Welcome</span>
@@ -118,7 +134,7 @@
   </div>
 
   <figure class="waves">
-    <img class="wave1" alt="" src="wave1.svg" />
+    <img class="wave1" alt="" src="wave1.png" />
     <img class="wave2" alt="" src="wave2.svg" />
   </figure>
 
