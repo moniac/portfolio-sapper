@@ -115,7 +115,7 @@
 <header class="h-full">
   <a href="/" class="logo_container px-10 mt-10">
     <img src="mo_logo.svg" alt="logo from moniac" />
-    <aside class="text-white">
+    <aside class="text-white pl-4">
       <h1>Mohammed Mulazada</h1>
       <h2>Front-end Developer</h2>
     </aside>
