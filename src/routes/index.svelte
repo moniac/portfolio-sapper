@@ -46,6 +46,21 @@
     box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.5);
     filter: blur(8px);
     animation: rotate 8s linear infinite;
+    margin-left: 80px;
+  }
+
+  .triangle {
+    opacity: 0.9;
+    animation: hover 4s ease alternate infinite;
+  }
+
+  .polygon {
+    opacity: 0.9;
+    animation: rotateStep 5s steps(1, end) infinite;
+    position: absolute;
+    left: -100px;
+    top: 0;
+    filter: blur(8px);
   }
 
   .waves {
@@ -68,6 +83,41 @@
 
     .intro {
       bottom: 50%;
+    }
+  }
+
+  @keyframes hover {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-20%);
+    }
+  }
+
+  @keyframes rotateStep {
+    0% {
+      transform: rotate(0);
+    }
+
+    20% {
+      transform: rotate(72deg);
+    }
+
+    40% {
+      transform: rotate(144deg);
+    }
+
+    60% {
+      transform: rotate(216deg);
+    }
+
+    80% {
+      transform: rotate(288deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
     }
   }
 
@@ -140,6 +190,12 @@
 
   <div class="figure-holder">
     <figure class="square" />
+    <figure class="triangle">
+      <img alt="" src="./triangle.svg" />
+    </figure>
+    <figure class="polygon">
+      <img alt="" src="./polygon.svg" />
+    </figure>
   </div>
 </header>
 
