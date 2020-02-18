@@ -42,6 +42,6 @@
     "sapper": "^0.27.0",
     "svelte": "^3.18.2",
     "svelte-image": "^0.1.9",
-    "tailwindcss": "^1.1.4"
+    "tailwindcss": "^1.2.0"
   }
 }
