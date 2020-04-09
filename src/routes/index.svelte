@@ -156,6 +156,30 @@
       animation: none;
     }
   }
+
+  @media (max-width: 768px) {
+    .author {
+      bottom: 0%;
+      right: -150px;
+      max-height: 150px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .author {
+      bottom: 5%;
+      right: -10%;
+      max-height: none;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .author {
+      bottom: 10%;
+      right: 0%;
+      max-height: none;
+    }
+  }
 </style>
 
 <svelte:head>
@@ -197,6 +221,10 @@
       <img alt="" src="./polygon.svg" />
     </figure>
   </div>
+  <img
+    class="absolute right-0 bottom-0 author"
+    alt="This is a picture of me, Mo Mulazada"
+    src="mo2-nobg.png" />
 </header>
 
 <main class="px-10 py-16">
@@ -205,4 +233,5 @@
     <br />
     work
   </GradientHeading>
+
 </main>
