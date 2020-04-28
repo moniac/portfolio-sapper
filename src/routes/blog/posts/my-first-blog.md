@@ -1,16 +1,17 @@
 ---
-title: My first blog
-slug: My first blog
-date: '2019-06-11T08:38:00.000Z'
+title: Using .map
+slug: Using .map
+date: '2020-04-29T08:38:00.000Z'
 summary: This is a test.
 ---
 
 # Hello World!
 
-Wow this actually works.
+Welcome to this guide on the .map method.
 
 ![test](https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif)
 
 ```js
+// ok
 const awesome = true;
 ```
