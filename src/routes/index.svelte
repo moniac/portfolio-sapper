@@ -1,6 +1,8 @@
 <script>
   import Row from "../components/Row.svelte";
   import GradientHeading from "../components/GradientHeading.svelte";
+
+  let headerStyles = ["skewed", "curved"];
 </script>
 
 <style>
@@ -13,14 +15,14 @@
 
   .wave1 {
     position: absolute;
-    bottom: -30%;
+    bottom: -34%;
     width: 100%;
     animation: wave 4s ease infinite alternate;
   }
 
   .wave2 {
     position: absolute;
-    bottom: -20%;
+    bottom: -24%;
     width: 100%;
     animation: wave 2s ease infinite alternate, hue 5s ease infinite;
     animation-delay: 0.2s;
@@ -77,9 +79,9 @@
   }
 
   @media (min-width: 768px) {
-    header {
+    /* header {
       clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);
-    }
+    } */
 
     .intro {
       bottom: 50%;
@@ -157,28 +159,18 @@
     }
   }
 
-  @media (max-width: 768px) {
-    .author {
-      bottom: 0%;
-      right: -150px;
-      max-height: 150px;
-    }
+  .curved {
+    position: relative;
+    height: 60vh;
+    border-bottom-left-radius: 50% 4%;
+    border-bottom-right-radius: 50% 4%;
   }
 
-  @media (min-width: 768px) {
-    .author {
-      bottom: 5%;
-      right: -10%;
-      max-height: none;
-    }
-  }
-
-  @media (min-width: 1280px) {
-    .author {
-      bottom: 10%;
-      right: 0%;
-      max-height: none;
-    }
+  .skewed {
+    clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);
+    height: 80vh;
+    z-index: 0;
+    transform-origin: top right;
   }
 </style>
 
@@ -186,7 +178,7 @@
   <title>Home | Portfolio of Mohammed Mulazada</title>
 </svelte:head>
 
-<header class="h-full">
+<header class={headerStyles[Math.floor(headerStyles.length * Math.random())]}>
   <a href="/" class="logo_container px-10 mt-10">
     <img src="mo_logo.svg" alt="logo from moniac" />
     <aside class="text-white pl-4">
@@ -221,10 +213,7 @@
       <img alt="" src="./polygon.svg" />
     </figure>
   </div>
-  <img
-    class="absolute right-0 bottom-0 author"
-    alt="This is a picture of me, Mo Mulazada"
-    src="mo2-nobg.png" />
+
 </header>
 
 <main class="px-10 py-16">

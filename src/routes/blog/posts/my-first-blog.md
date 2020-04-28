@@ -1,8 +1,8 @@
 ---
 title: My first blog
 slug: My first blog
-date: "2019-06-11T08:38:00.000Z"
-summary: An introduction to me.
+date: '2019-06-11T08:38:00.000Z'
+summary: This is a test.
 ---
 
 # Hello World!
@@ -14,7 +14,3 @@ Wow this actually works.
 ```js
 const awesome = true;
 ```
-
-| test | esa |
-| ---- | --- |
-| d    | a   |

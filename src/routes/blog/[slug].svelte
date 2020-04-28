@@ -93,6 +93,7 @@
     pre[class*="language-"] {
       padding: 1em;
       margin: 0.5em 0;
+      margin-bottom: 1.55rem;
       overflow: auto;
       border-radius: 0.3em;
     }
@@ -181,6 +182,29 @@
 
     .token.entity {
       cursor: help;
+    }
+
+    p {
+      margin-bottom: 1.55rem;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      margin-top: 3.1rem;
+      margin-bottom: 1.55rem;
+      font-weight: bold;
+    }
+
+    h1 {
+      font-size: 2rem;
+    }
+
+    .content > * {
+      margin-bottom: 1.55rem;
     }
   </style>
 </svelte:head>
