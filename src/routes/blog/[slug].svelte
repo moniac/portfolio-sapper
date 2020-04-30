@@ -186,6 +186,7 @@
 
     p {
       margin-bottom: 1.55rem;
+      font-size: 1.125rem;
     }
 
     h1,
@@ -194,12 +195,16 @@
     h4,
     h5,
     h6 {
-      margin-top: 3.1rem;
-      margin-bottom: 1.55rem;
+      /* margin-top: 3.1rem;
+      margin-bottom: 1.55rem; */
       font-weight: bold;
     }
 
     h1 {
+      font-size: 2.375rem;
+    }
+
+    h2 {
       font-size: 2rem;
     }
 
@@ -218,7 +223,7 @@
   </style>
 </svelte:head>
 
-<div class="container mx-auto max-w-2xl py-8 lg:py-8 px-4 ">
+<div class="container mx-auto max-w-2xl py-8 lg:py-8 px-8">
   <GradientHeading>{post.title}</GradientHeading>
 
   <div class="content">

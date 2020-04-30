@@ -15,7 +15,7 @@
     text-transform: uppercase;
     font-weight: 700;
     white-space: normal;
-    font-size: 4.8em;
+    font-size: 4.8rem;
   }
 
   :global(.dark-mode .GradientHeading) {

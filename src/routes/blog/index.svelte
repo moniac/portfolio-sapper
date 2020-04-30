@@ -11,13 +11,11 @@
 <script>
   export let posts;
   import GradientHeading from "../../components/GradientHeading.svelte";
-  console.log(posts);
+
   $: searchTerm = "";
   $: filteredPost = posts.filter(post =>
     post.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  $: console.log(searchTerm);
 </script>
 
 <style>
@@ -31,7 +29,7 @@
   <title>Blog</title>
 </svelte:head>
 
-<div class="container mx-auto max-w-2xl py-24 lg:py-32 px-4">
+<div class="container mx-auto max-w-2xl py-8 lg:py-8 px-8">
   <GradientHeading>
     Recent
     <br />
