@@ -29,7 +29,7 @@
   <title>Blog</title>
 </svelte:head>
 
-<div class="container mx-auto max-w-2xl py-8 lg:py-8 px-8">
+<div class="container mx-auto max-w-2xl py-8 lg:py-24 px-8">
   <GradientHeading>
     Recent
     <br />
