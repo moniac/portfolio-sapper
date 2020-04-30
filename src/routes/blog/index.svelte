@@ -12,6 +12,12 @@
   export let posts;
   import GradientHeading from "../../components/GradientHeading.svelte";
   console.log(posts);
+  $: searchTerm = "";
+  $: filteredPost = posts.filter(post =>
+    post.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  $: console.log(searchTerm);
 </script>
 
 <style>
@@ -25,15 +31,21 @@
   <title>Blog</title>
 </svelte:head>
 
-<div class="container py-24 lg:py-32 px-4 mx-auto max-w-6xl">
+<div class="container mx-auto max-w-2xl py-24 lg:py-32 px-4">
   <GradientHeading>
     Recent
     <br />
     posts
   </GradientHeading>
 
+  <input
+    class="shadow appearance-none border rounded w-full py-2 px-3 mb-8
+    text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+    type="text"
+    bind:value={searchTerm} />
+
   <ul>
-    {#each posts as post}
+    {#each filteredPost as post}
       <!-- we're using the non-standard `rel=prefetch` attribute to
 				tell Sapper to load the data for the page as soon as
 				the user hovers over the link or taps it, instead of

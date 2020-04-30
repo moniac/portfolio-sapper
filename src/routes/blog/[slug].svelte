@@ -212,11 +212,13 @@
         0 6.7px 5.3px rgba(0, 0, 0, 0.048), 0 12.5px 10px rgba(0, 0, 0, 0.06),
         0 22.3px 17.9px rgba(0, 0, 0, 0.072),
         0 41.8px 33.4px rgba(0, 0, 0, 0.086), 0 0px 50px rgba(0, 0, 0, 0.12);
+      border-radius: 4px;
+      width: 100%;
     }
   </style>
 </svelte:head>
 
-<div class="container py-24 lg:py-24 px-4 mx-auto max-w-6xl">
+<div class="container mx-auto max-w-2xl py-8 lg:py-8 px-4 ">
   <GradientHeading>{post.title}</GradientHeading>
 
   <div class="content">

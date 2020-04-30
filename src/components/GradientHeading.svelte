@@ -39,7 +39,7 @@
 </style>
 
 {#if depth === 1}
-  <h1 class="GradientHeading h{depth} {className} -ml-1 mb-4 lg:mb-16 lg:-ml-2">
+  <h1 class="GradientHeading h{depth} {className} -ml-1 mb-8 lg:mb-16 lg:-ml-2">
     <slot />
   </h1>
 {:else}
