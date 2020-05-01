@@ -5,155 +5,167 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 var sirv = _interopDefault(require('sirv'));
 var polka = _interopDefault(require('polka'));
 var compression = _interopDefault(require('compression'));
-var fs = _interopDefault(require('fs'));
-var path = _interopDefault(require('path'));
+var fs$1 = _interopDefault(require('fs'));
+var path$1 = _interopDefault(require('path'));
 var Stream = _interopDefault(require('stream'));
 var http = _interopDefault(require('http'));
 var Url = _interopDefault(require('url'));
 var https = _interopDefault(require('https'));
 var zlib = _interopDefault(require('zlib'));
 
-// Ordinarily, you'd generate this data from markdown files in your
-// repo, or fetch them from a database of some kind. But in order to
-// avoid unnecessary dependencies in the starter template, and in the
-// service of obviousness, we're just going to leave it here.
+const fs = require("fs");
+const path = require("path");
+const prism = require("prismjs");
+const marked = require("marked");
+const matter = require("gray-matter");
+const formatDate = require("date-fns/format");
+const readingTime = require("reading-time");
 
-// This file is called `_posts.js` rather than `posts.js`, because
-// we don't want to create an `/blog/posts` route — the leading
-// underscore tells Sapper not to do that.
+// Support JSX syntax highlighting
+require("prismjs/components/prism-jsx.min");
 
-const posts = [
-	{
-		title: 'What is Sapper?',
-		slug: 'what-is-sapper',
-		html: `
-			<p>First, you have to know what <a href='https://svelte.dev'>Svelte</a> is. Svelte is a UI framework with a bold new idea: rather than providing a library that you write code with (like React or Vue, for example), it's a compiler that turns your components into highly optimized vanilla JavaScript. If you haven't already read the <a href='https://svelte.dev/blog/frameworks-without-the-framework'>introductory blog post</a>, you should!</p>
+const cwd = process.cwd();
+const POSTS_DIR = path.join(cwd, "src/routes/blog/posts/");
+const EXCERPT_SEPARATOR = "<!-- more -->";
+const renderer = new marked.Renderer();
+const linkRenderer = renderer.link;
+renderer.link = (href, title, text) => {
+  const html = linkRenderer.call(renderer, href, title, text);
 
-			<p>Sapper is a Next.js-style framework (<a href='blog/how-is-sapper-different-from-next'>more on that here</a>) built around Svelte. It makes it embarrassingly easy to create extremely high performance web apps. Out of the box, you get:</p>
+  if (href.indexOf("/") === 0) {
+    // Do not open internal links on new tab
+    return html;
+  } else if (href.indexOf("#") === 0) {
+    // Handle hash links to internal elements
+    const html = linkRenderer.call(renderer, "javascript:;", title, text);
+    return html.replace(
+      /^<a /,
+      `<a onclick="document.location.hash='${href.substr(1)}';" `
+    );
+  }
 
-			<ul>
-				<li>Code-splitting, dynamic imports and hot module replacement, powered by webpack</li>
-				<li>Server-side rendering (SSR) with client-side hydration</li>
-				<li>Service worker for offline support, and all the PWA bells and whistles</li>
-				<li>The nicest development experience you've ever had, or your money back</li>
-			</ul>
+  return html.replace(/^<a /, '<a target="_blank" rel="nofollow" ');
+};
 
-			<p>It's implemented as Express middleware. Everything is set up and waiting for you to get started, but you keep complete control over the server, service worker, webpack config and everything else, so it's as flexible as you need it to be.</p>
-		`
-	},
+renderer.code = (code, language) => {
+  const parser = prism.languages[language] || prism.languages.html;
+  const highlighted = prism.highlight(code, parser, language);
+  return `<pre class="language-${language}"><code class="language-${language}">${highlighted}</code></pre>`;
+};
 
-	{
-		title: 'How to use Sapper',
-		slug: 'how-to-use-sapper',
-		html: `
-			<h2>Step one</h2>
-			<p>Create a new project, using <a href='https://github.com/Rich-Harris/degit'>degit</a>:</p>
+marked.setOptions({ renderer });
 
-			<pre><code>npx degit "sveltejs/sapper-template#rollup" my-app
-			cd my-app
-			npm install # or yarn!
-			npm run dev
-			</code></pre>
+const posts = fs
+  .readdirSync(POSTS_DIR)
+  .filter(fileName => /\.md$/.test(fileName))
+  .map(fileName => {
+    const fileMd = fs.readFileSync(path.join(POSTS_DIR, fileName), "utf8");
+    const { data, content: rawContent } = matter(fileMd);
+    const { title, date, summary } = data;
+    const slug = fileName.split(".")[0];
+    let content = rawContent;
+    let excerpt = "";
 
-			<h2>Step two</h2>
-			<p>Go to <a href='http://localhost:3000'>localhost:3000</a>. Open <code>my-app</code> in your editor. Edit the files in the <code>src/routes</code> directory or add new ones.</p>
+    if (rawContent.indexOf(EXCERPT_SEPARATOR) !== -1) {
+      const splittedContent = rawContent.split(EXCERPT_SEPARATOR);
+      excerpt = splittedContent[0];
+      content = splittedContent[1];
+    }
 
-			<h2>Step three</h2>
-			<p>...</p>
+    const html = marked(content);
+    const readingStats = readingTime(content);
+    const printReadingTime = readingStats.text;
+    const printDate = formatDate(new Date(date), "MMMM d, yyyy");
 
-			<h2>Step four</h2>
-			<p>Resist overdone joke formats.</p>
-		`
-	},
+    return {
+      title: title || slug,
+      slug,
+      html,
+      date,
+      excerpt,
+      printDate,
+      printReadingTime,
+      summary
+    };
+  });
 
-	{
-		title: 'Why the name?',
-		slug: 'why-the-name',
-		html: `
-			<p>In war, the soldiers who build bridges, repair roads, clear minefields and conduct demolitions — all under combat conditions — are known as <em>sappers</em>.</p>
+posts.sort((a, b) => {
+  const dateA = new Date(a.date);
+  const dateB = new Date(b.date);
 
-			<p>For web developers, the stakes are generally lower than those for combat engineers. But we face our own hostile environment: underpowered devices, poor network connections, and the complexity inherent in front-end engineering. Sapper, which is short for <strong>S</strong>velte <strong>app</strong> mak<strong>er</strong>, is your courageous and dutiful ally.</p>
-		`
-	},
-
-	{
-		title: 'How is Sapper different from Next.js?',
-		slug: 'how-is-sapper-different-from-next',
-		html: `
-			<p><a href='https://github.com/zeit/next.js'>Next.js</a> is a React framework from <a href='https://zeit.co'>Zeit</a>, and is the inspiration for Sapper. There are a few notable differences, however:</p>
-
-			<ul>
-				<li>It's powered by <a href='https://svelte.dev'>Svelte</a> instead of React, so it's faster and your apps are smaller</li>
-				<li>Instead of route masking, we encode route parameters in filenames. For example, the page you're looking at right now is <code>src/routes/blog/[slug].html</code></li>
-				<li>As well as pages (Svelte components, which render on server or client), you can create <em>server routes</em> in your <code>routes</code> directory. These are just <code>.js</code> files that export functions corresponding to HTTP methods, and receive Express <code>request</code> and <code>response</code> objects as arguments. This makes it very easy to, for example, add a JSON API such as the one <a href='blog/how-is-sapper-different-from-next.json'>powering this very page</a></li>
-				<li>Links are just <code>&lt;a&gt;</code> elements, rather than framework-specific <code>&lt;Link&gt;</code> components. That means, for example, that <a href='blog/how-can-i-get-involved'>this link right here</a>, despite being inside a blob of HTML, works with the router as you'd expect.</li>
-			</ul>
-		`
-	},
-
-	{
-		title: 'How can I get involved?',
-		slug: 'how-can-i-get-involved',
-		html: `
-			<p>We're so glad you asked! Come on over to the <a href='https://github.com/sveltejs/svelte'>Svelte</a> and <a href='https://github.com/sveltejs/sapper'>Sapper</a> repos, and join us in the <a href='https://svelte.dev/chat'>Discord chatroom</a>. Everyone is welcome, especially you!</p>
-		`
-	}
-];
-
-posts.forEach(post => {
-	post.html = post.html.replace(/^\t{3}/gm, '');
+  if (dateA > dateB) return -1;
+  if (dateA < dateB) return 1;
+  return 0;
 });
 
-const contents = JSON.stringify(posts.map(post => {
-	return {
-		title: post.title,
-		slug: post.slug
-	};
-}));
+posts.forEach(post => {
+  post.html = post.html.replace(/^\t{3}/gm, "");
+});
+
+const contents = JSON.stringify(
+  posts.map(post => {
+    return {
+      title: post.title,
+      slug: post.slug,
+      summary: post.summary,
+      date: post.date,
+      readingTime: post.printReadingTime
+    };
+  })
+);
 
 function get(req, res) {
-	res.writeHead(200, {
-		'Content-Type': 'application/json'
-	});
+  res.writeHead(200, {
+    "Content-Type": "application/json"
+  });
 
-	res.end(contents);
+  res.end(contents);
 }
 
 var route_0 = /*#__PURE__*/Object.freeze({
-	__proto__: null,
-	get: get
+  __proto__: null,
+  get: get
+});
+
+var usingArray_map = "<hr>\n<p>title: Using .map\nslug: Using .map\ndate: &#39;2020-04-29T08:38:00.000Z&#39;\nsummary: A simple guide to the .map function</p>\n<hr>\n<h1 id=\"hello-world\">Hello World!</h1>\n<p>Welcome to this guide on the .map method.</p>\n<p><img src=\"https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif\" alt=\"test\"></p>\n<pre><code class=\"language-js\">// ok\nconst awesome = true;</code></pre>\n";
+
+var route_1 = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  'default': usingArray_map
 });
 
 const lookup = new Map();
 posts.forEach(post => {
-	lookup.set(post.slug, JSON.stringify(post));
+  lookup.set(post.slug, JSON.stringify(post));
 });
 
 function get$1(req, res, next) {
-	// the `slug` parameter is available because
-	// this file is called [slug].json.js
-	const { slug } = req.params;
+  // the `slug` parameter is available because
+  // this file is called [slug].json.js
+  const { slug } = req.params;
 
-	if (lookup.has(slug)) {
-		res.writeHead(200, {
-			'Content-Type': 'application/json'
-		});
+  if (lookup.has(slug)) {
+    res.writeHead(200, {
+      "Content-Type": "application/json"
+    });
 
-		res.end(lookup.get(slug));
-	} else {
-		res.writeHead(404, {
-			'Content-Type': 'application/json'
-		});
+    res.end(lookup.get(slug));
+  } else {
+    res.writeHead(404, {
+      "Content-Type": "application/json"
+    });
 
-		res.end(JSON.stringify({
-			message: `Not found`
-		}));
-	}
+    res.end(
+      JSON.stringify({
+        message: `Not found`
+      })
+    );
+  }
 }
 
-var route_1 = /*#__PURE__*/Object.freeze({
-	__proto__: null,
-	get: get$1
+var route_2 = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  get: get$1
 });
 
 function noop() { }
@@ -178,9 +190,6 @@ function get_current_component() {
     if (!current_component)
         throw new Error(`Function called outside component initialization`);
     return current_component;
-}
-function onMount(fn) {
-    get_current_component().$$.on_mount.push(fn);
 }
 function setContext(key, context) {
     get_current_component().$$.context.set(key, context);
@@ -234,7 +243,7 @@ function create_ssr_component(fn) {
     return {
         render: (props = {}, options = {}) => {
             on_destroy = [];
-            const result = { head: '', css: new Set() };
+            const result = { title: '', head: '', css: new Set() };
             const html = $$render(result, props, {}, options);
             run_all(on_destroy);
             return {
@@ -243,7 +252,7 @@ function create_ssr_component(fn) {
                     code: Array.from(result.css).map(css => css.code).join('\n'),
                     map: null // TODO
                 },
-                head: result.head
+                head: result.title + result.head
             };
         },
         $$render
@@ -255,77 +264,71 @@ function add_attribute(name, value, boolean) {
     return ` ${name}${value === true ? '' : `=${typeof value === 'string' ? JSON.stringify(escape(value)) : `"${value}"`}`}`;
 }
 
-/* src/components/Row.svelte generated by Svelte v3.16.0 */
+/* src\components\GradientHeading.svelte generated by Svelte v3.21.0 */
 
 const css = {
-	code: ".Row.svelte-1rziq6j{display:flex;align-items:center}",
-	map: "{\"version\":3,\"file\":\"Row.svelte\",\"sources\":[\"Row.svelte\"],\"sourcesContent\":[\"<script>\\n  export let flexDirection = \\\"row\\\";\\n  export let justifyContent = \\\"space-around\\\";\\n</script>\\n\\n<style>\\n  .Row {\\n    display: flex;\\n    align-items: center;\\n  }\\n</style>\\n\\n<div\\n  class=\\\"Row\\\"\\n  style={`flex-direction: ${flexDirection}; justify-content: ${justifyContent}`}>\\n  <slot />\\n</div>\\n\"],\"names\":[],\"mappings\":\"AAME,IAAI,eAAC,CAAC,AACJ,OAAO,CAAE,IAAI,CACb,WAAW,CAAE,MAAM,AACrB,CAAC\"}"
+	code: ".GradientHeading.svelte-1kiplsl{background-image:linear-gradient(180deg, #5b5cf1, #21b3ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:0.9;transition:background-image 225ms ease;animation:svelte-1kiplsl-hue 10s infinite alternate;text-transform:uppercase;font-weight:700;white-space:normal;font-size:4.8rem}.dark-mode .GradientHeading{background-image:linear-gradient(to bottom, #f15b74, #ff6021)}@keyframes svelte-1kiplsl-hue{from{-webkit-filter:hue-rotate(0deg)}to{-webkit-filter:hue-rotate(-20deg)}}@media(min-width: 768px){.h1.svelte-1kiplsl{font-size:9.375em}}",
+	map: "{\"version\":3,\"file\":\"GradientHeading.svelte\",\"sources\":[\"GradientHeading.svelte\"],\"sourcesContent\":[\"<script>\\r\\n  export let depth = 1;\\r\\n  export let className = \\\"\\\";\\r\\n</script>\\r\\n\\r\\n<style>\\r\\n  .GradientHeading {\\r\\n    background-image: linear-gradient(180deg, #5b5cf1, #21b3ff);\\r\\n    -webkit-background-clip: text;\\r\\n    background-clip: text;\\r\\n    -webkit-text-fill-color: transparent;\\r\\n    line-height: 0.9;\\r\\n    transition: background-image 225ms ease;\\r\\n    animation: hue 10s infinite alternate;\\r\\n    text-transform: uppercase;\\r\\n    font-weight: 700;\\r\\n    white-space: normal;\\r\\n    font-size: 4.8rem;\\r\\n  }\\r\\n\\r\\n  :global(.dark-mode .GradientHeading) {\\r\\n    background-image: linear-gradient(to bottom, #f15b74, #ff6021);\\r\\n  }\\r\\n\\r\\n  @keyframes hue {\\r\\n    from {\\r\\n      -webkit-filter: hue-rotate(0deg);\\r\\n    }\\r\\n    to {\\r\\n      -webkit-filter: hue-rotate(-20deg);\\r\\n    }\\r\\n  }\\r\\n\\r\\n  @media (min-width: 768px) {\\r\\n    .h1 {\\r\\n      font-size: 9.375em;\\r\\n    }\\r\\n  }\\r\\n</style>\\r\\n\\r\\n{#if depth === 1}\\r\\n  <h1 class=\\\"GradientHeading h{depth} {className} -ml-1 mb-8 lg:mb-16 lg:-ml-2\\\">\\r\\n    <slot />\\r\\n  </h1>\\r\\n{:else}\\r\\n  {#if depth === 2}\\r\\n    <h2 class=\\\"GradientHeading h{depth} {className}\\\">\\r\\n      <slot />\\r\\n    </h2>\\r\\n  {:else}\\r\\n    <h3 class=\\\"GradientHeading h{depth} {className}\\\">\\r\\n      <slot />\\r\\n    </h3>\\r\\n  {/if}\\r\\n{/if}\\r\\n\"],\"names\":[],\"mappings\":\"AAME,gBAAgB,eAAC,CAAC,AAChB,gBAAgB,CAAE,gBAAgB,MAAM,CAAC,CAAC,OAAO,CAAC,CAAC,OAAO,CAAC,CAC3D,uBAAuB,CAAE,IAAI,CAC7B,eAAe,CAAE,IAAI,CACrB,uBAAuB,CAAE,WAAW,CACpC,WAAW,CAAE,GAAG,CAChB,UAAU,CAAE,gBAAgB,CAAC,KAAK,CAAC,IAAI,CACvC,SAAS,CAAE,kBAAG,CAAC,GAAG,CAAC,QAAQ,CAAC,SAAS,CACrC,cAAc,CAAE,SAAS,CACzB,WAAW,CAAE,GAAG,CAChB,WAAW,CAAE,MAAM,CACnB,SAAS,CAAE,MAAM,AACnB,CAAC,AAEO,2BAA2B,AAAE,CAAC,AACpC,gBAAgB,CAAE,gBAAgB,EAAE,CAAC,MAAM,CAAC,CAAC,OAAO,CAAC,CAAC,OAAO,CAAC,AAChE,CAAC,AAED,WAAW,kBAAI,CAAC,AACd,IAAI,AAAC,CAAC,AACJ,cAAc,CAAE,WAAW,IAAI,CAAC,AAClC,CAAC,AACD,EAAE,AAAC,CAAC,AACF,cAAc,CAAE,WAAW,MAAM,CAAC,AACpC,CAAC,AACH,CAAC,AAED,MAAM,AAAC,YAAY,KAAK,CAAC,AAAC,CAAC,AACzB,GAAG,eAAC,CAAC,AACH,SAAS,CAAE,OAAO,AACpB,CAAC,AACH,CAAC\"}"
 };
 
-const Row = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
-	let { flexDirection = "row" } = $$props;
-	let { justifyContent = "space-around" } = $$props;
-	if ($$props.flexDirection === void 0 && $$bindings.flexDirection && flexDirection !== void 0) $$bindings.flexDirection(flexDirection);
-	if ($$props.justifyContent === void 0 && $$bindings.justifyContent && justifyContent !== void 0) $$bindings.justifyContent(justifyContent);
+const GradientHeading = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
+	let { depth = 1 } = $$props;
+	let { className = "" } = $$props;
+	if ($$props.depth === void 0 && $$bindings.depth && depth !== void 0) $$bindings.depth(depth);
+	if ($$props.className === void 0 && $$bindings.className && className !== void 0) $$bindings.className(className);
 	$$result.css.add(css);
 
-	return `<div class="${"Row svelte-1rziq6j"}"${add_attribute("style", `flex-direction: ${flexDirection}; justify-content: ${justifyContent}`, 0)}>
-  ${$$slots.default ? $$slots.default({}) : ``}
-</div>`;
+	return `${depth === 1
+	? `<h1 class="${"GradientHeading h" + escape(depth) + " " + escape(className) + " -ml-1 mb-8 lg:mb-16 lg:-ml-2" + " svelte-1kiplsl"}">${$$slots.default ? $$slots.default({}) : ``}</h1>`
+	: `${depth === 2
+		? `<h2 class="${"GradientHeading h" + escape(depth) + " " + escape(className) + " svelte-1kiplsl"}">${$$slots.default ? $$slots.default({}) : ``}</h2>`
+		: `<h3 class="${"GradientHeading h" + escape(depth) + " " + escape(className) + " svelte-1kiplsl"}">${$$slots.default ? $$slots.default({}) : ``}</h3>`}`}`;
 });
 
-/* src/routes/index.svelte generated by Svelte v3.16.0 */
+/* src\routes\index.svelte generated by Svelte v3.21.0 */
 
 const css$1 = {
-	code: "h1.svelte-1qlgtzz{font-size:4.8em;text-transform:uppercase;font-weight:700;margin:0 0 0.5em 0;white-space:normal}h1.svelte-1qlgtzz{background-image:linear-gradient(180deg, #5b5cf1, #21b3ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:0.9;margin-left:-6px;transition:background-image 225ms ease;-webkit-animation:svelte-1qlgtzz-hue 10s infinite alternate}.dark-mode h1{background-image:linear-gradient(to bottom, #f15b74, #ff6021)}.role.svelte-1qlgtzz{font-size:40px;margin-bottom:16px}.avatar.svelte-1qlgtzz{animation:svelte-1qlgtzz-hover 4s ease infinite alternate-reverse}.avatar.svelte-1qlgtzz img.svelte-1qlgtzz,.avatar.svelte-1qlgtzz source.svelte-1qlgtzz{max-width:200px}.shadow.svelte-1qlgtzz{animation:svelte-1qlgtzz-hoverShadow 4s ease infinite alternate-reverse;box-shadow:none;max-width:200px}@media(min-width: 768px){h1.svelte-1qlgtzz{font-size:9.375em}.avatar.svelte-1qlgtzz img.svelte-1qlgtzz,.avatar.svelte-1qlgtzz source.svelte-1qlgtzz{max-width:400px}}@-webkit-keyframes svelte-1qlgtzz-hue{from{-webkit-filter:hue-rotate(0deg)}to{-webkit-filter:hue-rotate(-20deg)}}@keyframes svelte-1qlgtzz-hover{0%{transform:translateY(0%)}100%{transform:translateY(2%)}}@keyframes svelte-1qlgtzz-hoverShadow{0%{transform:scale(1)}100%{transform:scale(1.2)}}",
-	map: "{\"version\":3,\"file\":\"index.svelte\",\"sources\":[\"index.svelte\"],\"sourcesContent\":[\"<script>\\n  import Row from \\\"../components/Row.svelte\\\";\\n</script>\\n\\n<style>\\n  h1 {\\n    font-size: 4.8em;\\n    text-transform: uppercase;\\n    font-weight: 700;\\n    margin: 0 0 0.5em 0;\\n    white-space: normal;\\n  }\\n\\n  h1 {\\n    background-image: linear-gradient(180deg, #5b5cf1, #21b3ff);\\n    -webkit-background-clip: text;\\n    background-clip: text;\\n    -webkit-text-fill-color: transparent;\\n    line-height: 0.9;\\n    margin-left: -6px;\\n    transition: background-image 225ms ease;\\n    -webkit-animation: hue 10s infinite alternate;\\n  }\\n\\n  :global(.dark-mode h1) {\\n    background-image: linear-gradient(to bottom, #f15b74, #ff6021);\\n  }\\n\\n  .role {\\n    font-size: 40px;\\n    margin-bottom: 16px;\\n  }\\n\\n  .avatar {\\n    animation: hover 4s ease infinite alternate-reverse;\\n  }\\n\\n  .avatar img,\\n  .avatar source {\\n    max-width: 200px;\\n  }\\n\\n  .shadow {\\n    animation: hoverShadow 4s ease infinite alternate-reverse;\\n    box-shadow: none;\\n    max-width: 200px;\\n  }\\n\\n  @media (min-width: 768px) {\\n    h1 {\\n      font-size: 9.375em;\\n    }\\n\\n    .avatar img,\\n    .avatar source {\\n      max-width: 400px;\\n    }\\n  }\\n\\n  @-webkit-keyframes hue {\\n    from {\\n      -webkit-filter: hue-rotate(0deg);\\n    }\\n    to {\\n      -webkit-filter: hue-rotate(-20deg);\\n    }\\n  }\\n\\n  @keyframes hover {\\n    0% {\\n      transform: translateY(0%);\\n    }\\n\\n    100% {\\n      transform: translateY(2%);\\n    }\\n  }\\n\\n  @keyframes hoverShadow {\\n    0% {\\n      transform: scale(1);\\n    }\\n\\n    100% {\\n      transform: scale(1.2);\\n    }\\n  }\\n</style>\\n\\n<svelte:head>\\n  <title>Home | Portfolio of Mohammed Mulazada</title>\\n</svelte:head>\\n<div\\n  class=\\\"flex flex-col-reverse items-center px-6 justify-center lg:flex-row\\n  flex-row justify-between flex-wrap\\\">\\n  <div>\\n    <p class=\\\"role\\\">Front-End</p>\\n    <h1>\\n      Dev-\\n      <br />\\n      eloper\\n    </h1>\\n\\n    <p>\\n      Welcome to my portfolio. My name is Mohammed, but please call me Mo.\\n      <br />\\n      This site is still a work in progress...\\n    </p>\\n  </div>\\n\\n  <Row flexDirection=\\\"column\\\">\\n    <picture class=\\\"avatar\\\">\\n      <source srcset=\\\"g/mo-366.webp\\\" type=\\\"image/webp\\\" />\\n      <img alt=\\\"Image of Mohammed Mulazada\\\" src=\\\"mo.png\\\" />\\n    </picture>\\n    <img class=\\\"shadow\\\" alt=\\\"\\\" src={'shadow.png'} />\\n  </Row>\\n</div>\\n\\n<main>\\n  <section>\\n    <ul>\\n      <!-- <li>test</li> -->\\n    </ul>\\n  </section>\\n</main>\\n\"],\"names\":[],\"mappings\":\"AAKE,EAAE,eAAC,CAAC,AACF,SAAS,CAAE,KAAK,CAChB,cAAc,CAAE,SAAS,CACzB,WAAW,CAAE,GAAG,CAChB,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,KAAK,CAAC,CAAC,CACnB,WAAW,CAAE,MAAM,AACrB,CAAC,AAED,EAAE,eAAC,CAAC,AACF,gBAAgB,CAAE,gBAAgB,MAAM,CAAC,CAAC,OAAO,CAAC,CAAC,OAAO,CAAC,CAC3D,uBAAuB,CAAE,IAAI,CAC7B,eAAe,CAAE,IAAI,CACrB,uBAAuB,CAAE,WAAW,CACpC,WAAW,CAAE,GAAG,CAChB,WAAW,CAAE,IAAI,CACjB,UAAU,CAAE,gBAAgB,CAAC,KAAK,CAAC,IAAI,CACvC,iBAAiB,CAAE,kBAAG,CAAC,GAAG,CAAC,QAAQ,CAAC,SAAS,AAC/C,CAAC,AAEO,aAAa,AAAE,CAAC,AACtB,gBAAgB,CAAE,gBAAgB,EAAE,CAAC,MAAM,CAAC,CAAC,OAAO,CAAC,CAAC,OAAO,CAAC,AAChE,CAAC,AAED,KAAK,eAAC,CAAC,AACL,SAAS,CAAE,IAAI,CACf,aAAa,CAAE,IAAI,AACrB,CAAC,AAED,OAAO,eAAC,CAAC,AACP,SAAS,CAAE,oBAAK,CAAC,EAAE,CAAC,IAAI,CAAC,QAAQ,CAAC,iBAAiB,AACrD,CAAC,AAED,sBAAO,CAAC,kBAAG,CACX,sBAAO,CAAC,MAAM,eAAC,CAAC,AACd,SAAS,CAAE,KAAK,AAClB,CAAC,AAED,OAAO,eAAC,CAAC,AACP,SAAS,CAAE,0BAAW,CAAC,EAAE,CAAC,IAAI,CAAC,QAAQ,CAAC,iBAAiB,CACzD,UAAU,CAAE,IAAI,CAChB,SAAS,CAAE,KAAK,AAClB,CAAC,AAED,MAAM,AAAC,YAAY,KAAK,CAAC,AAAC,CAAC,AACzB,EAAE,eAAC,CAAC,AACF,SAAS,CAAE,OAAO,AACpB,CAAC,AAED,sBAAO,CAAC,kBAAG,CACX,sBAAO,CAAC,MAAM,eAAC,CAAC,AACd,SAAS,CAAE,KAAK,AAClB,CAAC,AACH,CAAC,AAED,mBAAmB,kBAAI,CAAC,AACtB,IAAI,AAAC,CAAC,AACJ,cAAc,CAAE,WAAW,IAAI,CAAC,AAClC,CAAC,AACD,EAAE,AAAC,CAAC,AACF,cAAc,CAAE,WAAW,MAAM,CAAC,AACpC,CAAC,AACH,CAAC,AAED,WAAW,oBAAM,CAAC,AAChB,EAAE,AAAC,CAAC,AACF,SAAS,CAAE,WAAW,EAAE,CAAC,AAC3B,CAAC,AAED,IAAI,AAAC,CAAC,AACJ,SAAS,CAAE,WAAW,EAAE,CAAC,AAC3B,CAAC,AACH,CAAC,AAED,WAAW,0BAAY,CAAC,AACtB,EAAE,AAAC,CAAC,AACF,SAAS,CAAE,MAAM,CAAC,CAAC,AACrB,CAAC,AAED,IAAI,AAAC,CAAC,AACJ,SAAS,CAAE,MAAM,GAAG,CAAC,AACvB,CAAC,AACH,CAAC\"}"
+	code: "header.svelte-158vcqo{background-image:linear-gradient(225deg, #010220 0%, #000000 100%);height:80vh;overflow:hidden;position:relative}.wave1.svelte-158vcqo{position:absolute;bottom:-30%;width:100%;animation:svelte-158vcqo-wave 4s ease infinite alternate}.wave2.svelte-158vcqo{position:absolute;bottom:-20%;width:100%;animation:svelte-158vcqo-wave 2s ease infinite alternate, svelte-158vcqo-hue 5s ease infinite;animation-delay:0.2s}.intro.svelte-158vcqo{position:absolute;bottom:10%}.figure-holder.svelte-158vcqo{position:absolute;right:30%;top:30%}.square.svelte-158vcqo{height:82px;width:82px;opacity:0.4;transform:rotate(45deg);border:10px solid #ffffff;box-shadow:inset 0 1px 3px 0 rgba(0, 0, 0, 0.5);filter:blur(8px);animation:svelte-158vcqo-rotate 8s linear infinite;margin-left:80px}.triangle.svelte-158vcqo{opacity:0.9;animation:svelte-158vcqo-hover 4s ease alternate infinite}.polygon.svelte-158vcqo{opacity:0.9;animation:svelte-158vcqo-rotateStep 5s steps(1, end) infinite;position:absolute;left:-100px;top:0;filter:blur(8px)}.waves.svelte-158vcqo{opacity:0.6}.logo_container.svelte-158vcqo{max-height:52px;display:flex}.logo_container > img{max-height:52px}@media(min-width: 768px){header.svelte-158vcqo{clip-path:polygon(0 0, 100% 0, 100% 80%, 0% 100%)}.intro.svelte-158vcqo{bottom:50%}}@keyframes svelte-158vcqo-hover{from{transform:translateY(0)}to{transform:translateY(-20%)}}@keyframes svelte-158vcqo-rotateStep{0%{transform:rotate(0)}20%{transform:rotate(72deg)}40%{transform:rotate(144deg)}60%{transform:rotate(216deg)}80%{transform:rotate(288deg)}100%{transform:rotate(360deg)}}@keyframes svelte-158vcqo-rotate{from{transform:rotate(0)}to{transform:rotate(1turn)}}@keyframes svelte-158vcqo-hue{from{-webkit-filter:hue-rotate(0deg)}to{-webkit-filter:hue-rotate(-360deg)}}@keyframes svelte-158vcqo-wave{0%{transform:translateY(0%)}100%{transform:translateY(-5%)}}@media(prefers-reduced-motion: reduce){.wave1.svelte-158vcqo,.wave2.svelte-158vcqo,.square.svelte-158vcqo{animation:none}}",
+	map: "{\"version\":3,\"file\":\"index.svelte\",\"sources\":[\"index.svelte\"],\"sourcesContent\":[\"<script>\\r\\n  import Row from \\\"../components/Row.svelte\\\";\\r\\n  import GradientHeading from \\\"../components/GradientHeading.svelte\\\";\\r\\n</script>\\r\\n\\r\\n<style>\\r\\n  header {\\r\\n    background-image: linear-gradient(225deg, #010220 0%, #000000 100%);\\r\\n    height: 80vh;\\r\\n    overflow: hidden;\\r\\n    position: relative;\\r\\n  }\\r\\n\\r\\n  .wave1 {\\r\\n    position: absolute;\\r\\n    bottom: -30%;\\r\\n    width: 100%;\\r\\n    animation: wave 4s ease infinite alternate;\\r\\n  }\\r\\n\\r\\n  .wave2 {\\r\\n    position: absolute;\\r\\n    bottom: -20%;\\r\\n    width: 100%;\\r\\n    animation: wave 2s ease infinite alternate, hue 5s ease infinite;\\r\\n    animation-delay: 0.2s;\\r\\n  }\\r\\n\\r\\n  .intro {\\r\\n    position: absolute;\\r\\n    bottom: 10%;\\r\\n  }\\r\\n\\r\\n  .figure-holder {\\r\\n    position: absolute;\\r\\n    right: 30%;\\r\\n    top: 30%;\\r\\n  }\\r\\n\\r\\n  .square {\\r\\n    height: 82px;\\r\\n    width: 82px;\\r\\n    opacity: 0.4;\\r\\n    transform: rotate(45deg);\\r\\n    border: 10px solid #ffffff;\\r\\n    box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.5);\\r\\n    filter: blur(8px);\\r\\n    animation: rotate 8s linear infinite;\\r\\n    margin-left: 80px;\\r\\n  }\\r\\n\\r\\n  .triangle {\\r\\n    opacity: 0.9;\\r\\n    animation: hover 4s ease alternate infinite;\\r\\n  }\\r\\n\\r\\n  .polygon {\\r\\n    opacity: 0.9;\\r\\n    animation: rotateStep 5s steps(1, end) infinite;\\r\\n    position: absolute;\\r\\n    left: -100px;\\r\\n    top: 0;\\r\\n    filter: blur(8px);\\r\\n  }\\r\\n\\r\\n  .waves {\\r\\n    opacity: 0.6;\\r\\n  }\\r\\n\\r\\n  .logo_container {\\r\\n    max-height: 52px;\\r\\n    display: flex;\\r\\n  }\\r\\n\\r\\n  :global(.logo_container > img) {\\r\\n    max-height: 52px;\\r\\n  }\\r\\n\\r\\n  @media (min-width: 768px) {\\r\\n    header {\\r\\n      clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);\\r\\n    }\\r\\n\\r\\n    .intro {\\r\\n      bottom: 50%;\\r\\n    }\\r\\n  }\\r\\n\\r\\n  @keyframes hover {\\r\\n    from {\\r\\n      transform: translateY(0);\\r\\n    }\\r\\n    to {\\r\\n      transform: translateY(-20%);\\r\\n    }\\r\\n  }\\r\\n\\r\\n  @keyframes rotateStep {\\r\\n    0% {\\r\\n      transform: rotate(0);\\r\\n    }\\r\\n\\r\\n    20% {\\r\\n      transform: rotate(72deg);\\r\\n    }\\r\\n\\r\\n    40% {\\r\\n      transform: rotate(144deg);\\r\\n    }\\r\\n\\r\\n    60% {\\r\\n      transform: rotate(216deg);\\r\\n    }\\r\\n\\r\\n    80% {\\r\\n      transform: rotate(288deg);\\r\\n    }\\r\\n\\r\\n    100% {\\r\\n      transform: rotate(360deg);\\r\\n    }\\r\\n  }\\r\\n\\r\\n  @keyframes rotate {\\r\\n    from {\\r\\n      transform: rotate(0);\\r\\n    }\\r\\n    to {\\r\\n      transform: rotate(1turn);\\r\\n    }\\r\\n  }\\r\\n\\r\\n  @keyframes hue {\\r\\n    from {\\r\\n      -webkit-filter: hue-rotate(0deg);\\r\\n    }\\r\\n    to {\\r\\n      -webkit-filter: hue-rotate(-360deg);\\r\\n    }\\r\\n  }\\r\\n\\r\\n  @keyframes wave {\\r\\n    0% {\\r\\n      transform: translateY(0%);\\r\\n    }\\r\\n\\r\\n    100% {\\r\\n      transform: translateY(-5%);\\r\\n    }\\r\\n  }\\r\\n\\r\\n  @media (prefers-reduced-motion: reduce) {\\r\\n    .wave1,\\r\\n    .wave2,\\r\\n    .square {\\r\\n      animation: none;\\r\\n    }\\r\\n  }\\r\\n</style>\\r\\n\\r\\n<svelte:head>\\r\\n  <title>Home | Portfolio of Mohammed Mulazada</title>\\r\\n</svelte:head>\\r\\n\\r\\n<header class=\\\"h-full\\\">\\r\\n  <a href=\\\"/\\\" class=\\\"logo_container px-10 mt-10\\\">\\r\\n    <img src=\\\"mo_logo.svg\\\" alt=\\\"logo from moniac\\\" />\\r\\n    <aside class=\\\"text-white pl-4\\\">\\r\\n      <h1>Mohammed Mulazada</h1>\\r\\n      <h2>Front-end Developer</h2>\\r\\n    </aside>\\r\\n  </a>\\r\\n  <div class=\\\"px-10 intro text-white\\\">\\r\\n    <h1 class=\\\"text-4xl leading-none mb-4\\\">\\r\\n      <span class=\\\"font-bold text-6xl\\\">Welcome</span>\\r\\n      <br />\\r\\n      to my portfolio\\r\\n    </h1>\\r\\n    <p class=\\\"max-w-lg\\\">\\r\\n      I am Mohammed Mulazada, a Front-End Developer based in Amsterdam. With a\\r\\n      passion for all things web, I am looking for challenges and new things to\\r\\n      learn each and every day.\\r\\n    </p>\\r\\n  </div>\\r\\n\\r\\n  <figure class=\\\"waves\\\">\\r\\n    <img class=\\\"wave1\\\" alt=\\\"\\\" src=\\\"wave1.png\\\" />\\r\\n    <img class=\\\"wave2\\\" alt=\\\"\\\" src=\\\"wave2.svg\\\" />\\r\\n  </figure>\\r\\n\\r\\n  <div class=\\\"figure-holder\\\">\\r\\n    <figure class=\\\"square\\\" />\\r\\n    <figure class=\\\"triangle\\\">\\r\\n      <img alt=\\\"\\\" src=\\\"./triangle.svg\\\" />\\r\\n    </figure>\\r\\n    <figure class=\\\"polygon\\\">\\r\\n      <img alt=\\\"\\\" src=\\\"./polygon.svg\\\" />\\r\\n    </figure>\\r\\n  </div>\\r\\n</header>\\r\\n\\r\\n<main class=\\\"px-10 py-16\\\">\\r\\n  <GradientHeading depth={2}>\\r\\n    My\\r\\n    <br />\\r\\n    work\\r\\n  </GradientHeading>\\r\\n\\r\\n</main>\\r\\n\"],\"names\":[],\"mappings\":\"AAME,MAAM,eAAC,CAAC,AACN,gBAAgB,CAAE,gBAAgB,MAAM,CAAC,CAAC,OAAO,CAAC,EAAE,CAAC,CAAC,OAAO,CAAC,IAAI,CAAC,CACnE,MAAM,CAAE,IAAI,CACZ,QAAQ,CAAE,MAAM,CAChB,QAAQ,CAAE,QAAQ,AACpB,CAAC,AAED,MAAM,eAAC,CAAC,AACN,QAAQ,CAAE,QAAQ,CAClB,MAAM,CAAE,IAAI,CACZ,KAAK,CAAE,IAAI,CACX,SAAS,CAAE,mBAAI,CAAC,EAAE,CAAC,IAAI,CAAC,QAAQ,CAAC,SAAS,AAC5C,CAAC,AAED,MAAM,eAAC,CAAC,AACN,QAAQ,CAAE,QAAQ,CAClB,MAAM,CAAE,IAAI,CACZ,KAAK,CAAE,IAAI,CACX,SAAS,CAAE,mBAAI,CAAC,EAAE,CAAC,IAAI,CAAC,QAAQ,CAAC,SAAS,CAAC,CAAC,kBAAG,CAAC,EAAE,CAAC,IAAI,CAAC,QAAQ,CAChE,eAAe,CAAE,IAAI,AACvB,CAAC,AAED,MAAM,eAAC,CAAC,AACN,QAAQ,CAAE,QAAQ,CAClB,MAAM,CAAE,GAAG,AACb,CAAC,AAED,cAAc,eAAC,CAAC,AACd,QAAQ,CAAE,QAAQ,CAClB,KAAK,CAAE,GAAG,CACV,GAAG,CAAE,GAAG,AACV,CAAC,AAED,OAAO,eAAC,CAAC,AACP,MAAM,CAAE,IAAI,CACZ,KAAK,CAAE,IAAI,CACX,OAAO,CAAE,GAAG,CACZ,SAAS,CAAE,OAAO,KAAK,CAAC,CACxB,MAAM,CAAE,IAAI,CAAC,KAAK,CAAC,OAAO,CAC1B,UAAU,CAAE,KAAK,CAAC,CAAC,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,GAAG,CAAC,CAChD,MAAM,CAAE,KAAK,GAAG,CAAC,CACjB,SAAS,CAAE,qBAAM,CAAC,EAAE,CAAC,MAAM,CAAC,QAAQ,CACpC,WAAW,CAAE,IAAI,AACnB,CAAC,AAED,SAAS,eAAC,CAAC,AACT,OAAO,CAAE,GAAG,CACZ,SAAS,CAAE,oBAAK,CAAC,EAAE,CAAC,IAAI,CAAC,SAAS,CAAC,QAAQ,AAC7C,CAAC,AAED,QAAQ,eAAC,CAAC,AACR,OAAO,CAAE,GAAG,CACZ,SAAS,CAAE,yBAAU,CAAC,EAAE,CAAC,MAAM,CAAC,CAAC,CAAC,GAAG,CAAC,CAAC,QAAQ,CAC/C,QAAQ,CAAE,QAAQ,CAClB,IAAI,CAAE,MAAM,CACZ,GAAG,CAAE,CAAC,CACN,MAAM,CAAE,KAAK,GAAG,CAAC,AACnB,CAAC,AAED,MAAM,eAAC,CAAC,AACN,OAAO,CAAE,GAAG,AACd,CAAC,AAED,eAAe,eAAC,CAAC,AACf,UAAU,CAAE,IAAI,CAChB,OAAO,CAAE,IAAI,AACf,CAAC,AAEO,qBAAqB,AAAE,CAAC,AAC9B,UAAU,CAAE,IAAI,AAClB,CAAC,AAED,MAAM,AAAC,YAAY,KAAK,CAAC,AAAC,CAAC,AACzB,MAAM,eAAC,CAAC,AACN,SAAS,CAAE,QAAQ,CAAC,CAAC,CAAC,CAAC,CAAC,IAAI,CAAC,CAAC,CAAC,CAAC,IAAI,CAAC,GAAG,CAAC,CAAC,EAAE,CAAC,IAAI,CAAC,AACpD,CAAC,AAED,MAAM,eAAC,CAAC,AACN,MAAM,CAAE,GAAG,AACb,CAAC,AACH,CAAC,AAED,WAAW,oBAAM,CAAC,AAChB,IAAI,AAAC,CAAC,AACJ,SAAS,CAAE,WAAW,CAAC,CAAC,AAC1B,CAAC,AACD,EAAE,AAAC,CAAC,AACF,SAAS,CAAE,WAAW,IAAI,CAAC,AAC7B,CAAC,AACH,CAAC,AAED,WAAW,yBAAW,CAAC,AACrB,EAAE,AAAC,CAAC,AACF,SAAS,CAAE,OAAO,CAAC,CAAC,AACtB,CAAC,AAED,GAAG,AAAC,CAAC,AACH,SAAS,CAAE,OAAO,KAAK,CAAC,AAC1B,CAAC,AAED,GAAG,AAAC,CAAC,AACH,SAAS,CAAE,OAAO,MAAM,CAAC,AAC3B,CAAC,AAED,GAAG,AAAC,CAAC,AACH,SAAS,CAAE,OAAO,MAAM,CAAC,AAC3B,CAAC,AAED,GAAG,AAAC,CAAC,AACH,SAAS,CAAE,OAAO,MAAM,CAAC,AAC3B,CAAC,AAED,IAAI,AAAC,CAAC,AACJ,SAAS,CAAE,OAAO,MAAM,CAAC,AAC3B,CAAC,AACH,CAAC,AAED,WAAW,qBAAO,CAAC,AACjB,IAAI,AAAC,CAAC,AACJ,SAAS,CAAE,OAAO,CAAC,CAAC,AACtB,CAAC,AACD,EAAE,AAAC,CAAC,AACF,SAAS,CAAE,OAAO,KAAK,CAAC,AAC1B,CAAC,AACH,CAAC,AAED,WAAW,kBAAI,CAAC,AACd,IAAI,AAAC,CAAC,AACJ,cAAc,CAAE,WAAW,IAAI,CAAC,AAClC,CAAC,AACD,EAAE,AAAC,CAAC,AACF,cAAc,CAAE,WAAW,OAAO,CAAC,AACrC,CAAC,AACH,CAAC,AAED,WAAW,mBAAK,CAAC,AACf,EAAE,AAAC,CAAC,AACF,SAAS,CAAE,WAAW,EAAE,CAAC,AAC3B,CAAC,AAED,IAAI,AAAC,CAAC,AACJ,SAAS,CAAE,WAAW,GAAG,CAAC,AAC5B,CAAC,AACH,CAAC,AAED,MAAM,AAAC,yBAAyB,MAAM,CAAC,AAAC,CAAC,AACvC,qBAAM,CACN,qBAAM,CACN,OAAO,eAAC,CAAC,AACP,SAAS,CAAE,IAAI,AACjB,CAAC,AACH,CAAC\"}"
 };
 
 const Routes = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 	$$result.css.add(css$1);
 
-	return `${($$result.head += `<title>Home | Portfolio of Mohammed Mulazada</title>`, "")}
-<div class="${"flex flex-col-reverse items-center px-6 justify-center lg:flex-row\n  flex-row justify-between flex-wrap"}">
-  <div>
-    <p class="${"role svelte-1qlgtzz"}">Front-End</p>
-    <h1 class="${"svelte-1qlgtzz"}">
-      Dev-
+	return `${($$result.head += `${($$result.title = `<title>Home | Portfolio of Mohammed Mulazada</title>`, "")}`, "")}
+
+<header class="${"h-full svelte-158vcqo"}"><a href="${"/"}" class="${"logo_container px-10 mt-10 svelte-158vcqo"}"><img src="${"mo_logo.svg"}" alt="${"logo from moniac"}">
+    <aside class="${"text-white pl-4"}"><h1>Mohammed Mulazada</h1>
+      <h2>Front-end Developer</h2></aside></a>
+  <div class="${"px-10 intro text-white svelte-158vcqo"}"><h1 class="${"text-4xl leading-none mb-4"}"><span class="${"font-bold text-6xl"}">Welcome</span>
       <br>
-      eloper
+      to my portfolio
     </h1>
+    <p class="${"max-w-lg"}">I am Mohammed Mulazada, a Front-End Developer based in Amsterdam. With a
+      passion for all things web, I am looking for challenges and new things to
+      learn each and every day.
+    </p></div>
 
-    <p>
-      Welcome to my portfolio. My name is Mohammed, but please call me Mo.
-      <br>
-      This site is still a work in progress...
-    </p>
-  </div>
+  <figure class="${"waves svelte-158vcqo"}"><img class="${"wave1 svelte-158vcqo"}" alt="${""}" src="${"wave1.png"}">
+    <img class="${"wave2 svelte-158vcqo"}" alt="${""}" src="${"wave2.svg"}"></figure>
 
-  ${validate_component(Row, "Row").$$render($$result, { flexDirection: "column" }, {}, {
-		default: () => `
-    <picture class="${"avatar svelte-1qlgtzz"}">
-      <source srcset="${"g/mo-366.webp"}" type="${"image/webp"}" class="${"svelte-1qlgtzz"}">
-      <img alt="${"Image of Mohammed Mulazada"}" src="${"mo.png"}" class="${"svelte-1qlgtzz"}">
-    </picture>
-    <img class="${"shadow svelte-1qlgtzz"}" alt="${""}"${add_attribute("src", "shadow.png", 0)}>
+  <div class="${"figure-holder svelte-158vcqo"}"><figure class="${"square svelte-158vcqo"}"></figure>
+    <figure class="${"triangle svelte-158vcqo"}"><img alt="${""}" src="${"./triangle.svg"}"></figure>
+    <figure class="${"polygon svelte-158vcqo"}"><img alt="${""}" src="${"./polygon.svg"}"></figure></div></header>
+
+<main class="${"px-10 py-16"}">${validate_component(GradientHeading, "GradientHeading").$$render($$result, { depth: 2 }, {}, {
+		default: () => `My
+    <br>
+    work
   `
-	})}
-</div>
-
-<main>
-  <section>
-    <ul>
-      
-    </ul>
-  </section>
-</main>`;
+	})}</main>`;
 });
 
-/* src/routes/blog/index.svelte generated by Svelte v3.16.0 */
+/* src\routes\blog\index.svelte generated by Svelte v3.21.0 */
 
 const css$2 = {
-	code: "ul.svelte-1uzksw3{margin:0 0 1em 0;line-height:1.5}",
-	map: "{\"version\":3,\"file\":\"index.svelte\",\"sources\":[\"index.svelte\"],\"sourcesContent\":[\"<script context=\\\"module\\\">\\n  export function preload({ params, query }) {\\n    return this.fetch(`blog.json`)\\n      .then(r => r.json())\\n      .then(posts => {\\n        return { posts };\\n      });\\n  }\\n</script>\\n\\n<script>\\n  export let posts;\\n</script>\\n\\n<style>\\n  ul {\\n    margin: 0 0 1em 0;\\n    line-height: 1.5;\\n  }\\n</style>\\n\\n<svelte:head>\\n  <title>Blog</title>\\n</svelte:head>\\n\\n<h1>Recent posts</h1>\\n\\n<ul>\\n  {#each posts as post}\\n    <!-- we're using the non-standard `rel=prefetch` attribute to\\n\\t\\t\\t\\ttell Sapper to load the data for the page as soon as\\n\\t\\t\\t\\tthe user hovers over the link or taps it, instead of\\n\\t\\t\\t\\twaiting for the 'click' event -->\\n    <li>\\n      <a rel=\\\"prefetch\\\" href=\\\"blog/{post.slug}\\\">{post.title}</a>\\n    </li>\\n  {/each}\\n</ul>\\n\"],\"names\":[],\"mappings\":\"AAeE,EAAE,eAAC,CAAC,AACF,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,GAAG,CAAC,CAAC,CACjB,WAAW,CAAE,GAAG,AAClB,CAAC\"}"
+	code: "ul.svelte-1emtgb4{margin:0 0 1em 0;line-height:1.5}",
+	map: "{\"version\":3,\"file\":\"index.svelte\",\"sources\":[\"index.svelte\"],\"sourcesContent\":[\"<script context=\\\"module\\\">\\r\\n  export function preload({ params, query }) {\\r\\n    return this.fetch(`blog.json`)\\r\\n      .then(r => r.json())\\r\\n      .then(posts => {\\r\\n        return { posts };\\r\\n      });\\r\\n  }\\r\\n</script>\\r\\n\\r\\n<script>\\r\\n  export let posts;\\r\\n  import GradientHeading from \\\"../../components/GradientHeading.svelte\\\";\\r\\n\\r\\n  $: searchTerm = \\\"\\\";\\r\\n  $: filteredPost = posts.filter(post =>\\r\\n    post.title.toLowerCase().includes(searchTerm.toLowerCase())\\r\\n  );\\r\\n</script>\\r\\n\\r\\n<style>\\r\\n  ul {\\r\\n    margin: 0 0 1em 0;\\r\\n    line-height: 1.5;\\r\\n  }\\r\\n</style>\\r\\n\\r\\n<svelte:head>\\r\\n  <title>Blog</title>\\r\\n</svelte:head>\\r\\n\\r\\n<div class=\\\"container mx-auto max-w-2xl py-8 lg:py-24 px-8\\\">\\r\\n  <GradientHeading>\\r\\n    Recent\\r\\n    <br />\\r\\n    posts\\r\\n  </GradientHeading>\\r\\n\\r\\n  <input\\r\\n    class=\\\"shadow appearance-none border rounded w-full py-2 px-3 mb-8\\r\\n    text-gray-700 leading-tight focus:outline-none focus:shadow-outline\\\"\\r\\n    type=\\\"text\\\"\\r\\n    bind:value={searchTerm} />\\r\\n\\r\\n  <ul>\\r\\n    {#each filteredPost as post}\\r\\n      <!-- we're using the non-standard `rel=prefetch` attribute to\\r\\n\\t\\t\\t\\ttell Sapper to load the data for the page as soon as\\r\\n\\t\\t\\t\\tthe user hovers over the link or taps it, instead of\\r\\n\\t\\t\\t\\twaiting for the 'click' event -->\\r\\n      <li>\\r\\n        <a class=\\\"underline\\\" rel=\\\"prefetch\\\" href=\\\"blog/{post.slug}/\\\">\\r\\n          {post.title}\\r\\n        </a>\\r\\n        <summary class=\\\"italic\\\">\\r\\n          {post.summary}\\r\\n          <br />\\r\\n          {post.readingTime}\\r\\n        </summary>\\r\\n      </li>\\r\\n    {/each}\\r\\n  </ul>\\r\\n</div>\\r\\n\"],\"names\":[],\"mappings\":\"AAqBE,EAAE,eAAC,CAAC,AACF,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,GAAG,CAAC,CAAC,CACjB,WAAW,CAAE,GAAG,AAClB,CAAC\"}"
 };
 
 function preload({ params, query }) {
@@ -338,28 +341,40 @@ const Blog = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 	let { posts } = $$props;
 	if ($$props.posts === void 0 && $$bindings.posts && posts !== void 0) $$bindings.posts(posts);
 	$$result.css.add(css$2);
+	let searchTerm = "";
+	let filteredPost = posts.filter(post => post.title.toLowerCase().includes(searchTerm.toLowerCase()));
 
-	return `${($$result.head += `<title>Blog</title>`, "")}
+	return `${($$result.head += `${($$result.title = `<title>Blog</title>`, "")}`, "")}
 
-<h1>Recent posts</h1>
+<div class="${"container mx-auto max-w-2xl py-8 lg:py-24 px-8"}">${validate_component(GradientHeading, "GradientHeading").$$render($$result, {}, {}, {
+		default: () => `Recent
+    <br>
+    posts
+  `
+	})}
 
-<ul class="${"svelte-1uzksw3"}">
-  ${each(posts, post => `
-    <li>
-      <a rel="${"prefetch"}" href="${"blog/" + escape(post.slug)}">${escape(post.title)}</a>
-    </li>`)}
-</ul>`;
+  <input class="${"shadow appearance-none border rounded w-full py-2 px-3 mb-8\r\n    text-gray-700 leading-tight focus:outline-none focus:shadow-outline"}" type="${"text"}"${add_attribute("value", searchTerm, 1)}>
+
+  <ul class="${"svelte-1emtgb4"}">${each(filteredPost, post => `
+      <li><a class="${"underline"}" rel="${"prefetch"}" href="${"blog/" + escape(post.slug) + "/"}">${escape(post.title)}</a>
+        <summary class="${"italic"}">${escape(post.summary)}
+          <br>
+          ${escape(post.readingTime)}</summary>
+      </li>`)}</ul></div>`;
 });
 
-/* src/routes/blog/[slug].svelte generated by Svelte v3.16.0 */
+/* src\routes\blog\[slug].svelte generated by Svelte v3.21.0 */
 
 const css$3 = {
-	code: ".content.svelte-gnxal1 h2{font-size:1.4em;font-weight:500}.content.svelte-gnxal1 pre{background-color:#f9f9f9;box-shadow:inset 1px 1px 5px rgba(0,0,0,0.05);padding:0.5em;border-radius:2px;overflow-x:auto}.content.svelte-gnxal1 pre code{background-color:transparent;padding:0}.content.svelte-gnxal1 ul{line-height:1.5}.content.svelte-gnxal1 li{margin:0 0 0.5em 0}",
-	map: "{\"version\":3,\"file\":\"[slug].svelte\",\"sources\":[\"[slug].svelte\"],\"sourcesContent\":[\"<script context=\\\"module\\\">\\n\\texport async function preload({ params, query }) {\\n\\t\\t// the `slug` parameter is available because\\n\\t\\t// this file is called [slug].svelte\\n\\t\\tconst res = await this.fetch(`blog/${params.slug}.json`);\\n\\t\\tconst data = await res.json();\\n\\n\\t\\tif (res.status === 200) {\\n\\t\\t\\treturn { post: data };\\n\\t\\t} else {\\n\\t\\t\\tthis.error(res.status, data.message);\\n\\t\\t}\\n\\t}\\n</script>\\n\\n<script>\\n\\texport let post;\\n</script>\\n\\n<style>\\n\\t/*\\n\\t\\tBy default, CSS is locally scoped to the component,\\n\\t\\tand any unused styles are dead-code-eliminated.\\n\\t\\tIn this page, Svelte can't know which elements are\\n\\t\\tgoing to appear inside the {{{post.html}}} block,\\n\\t\\tso we have to use the :global(...) modifier to target\\n\\t\\tall elements inside .content\\n\\t*/\\n\\t.content :global(h2) {\\n\\t\\tfont-size: 1.4em;\\n\\t\\tfont-weight: 500;\\n\\t}\\n\\n\\t.content :global(pre) {\\n\\t\\tbackground-color: #f9f9f9;\\n\\t\\tbox-shadow: inset 1px 1px 5px rgba(0,0,0,0.05);\\n\\t\\tpadding: 0.5em;\\n\\t\\tborder-radius: 2px;\\n\\t\\toverflow-x: auto;\\n\\t}\\n\\n\\t.content :global(pre) :global(code) {\\n\\t\\tbackground-color: transparent;\\n\\t\\tpadding: 0;\\n\\t}\\n\\n\\t.content :global(ul) {\\n\\t\\tline-height: 1.5;\\n\\t}\\n\\n\\t.content :global(li) {\\n\\t\\tmargin: 0 0 0.5em 0;\\n\\t}\\n</style>\\n\\n<svelte:head>\\n\\t<title>{post.title}</title>\\n</svelte:head>\\n\\n<h1>{post.title}</h1>\\n\\n<div class='content'>\\n\\t{@html post.html}\\n</div>\\n\"],\"names\":[],\"mappings\":\"AA4BC,sBAAQ,CAAC,AAAQ,EAAE,AAAE,CAAC,AACrB,SAAS,CAAE,KAAK,CAChB,WAAW,CAAE,GAAG,AACjB,CAAC,AAED,sBAAQ,CAAC,AAAQ,GAAG,AAAE,CAAC,AACtB,gBAAgB,CAAE,OAAO,CACzB,UAAU,CAAE,KAAK,CAAC,GAAG,CAAC,GAAG,CAAC,GAAG,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,IAAI,CAAC,CAC9C,OAAO,CAAE,KAAK,CACd,aAAa,CAAE,GAAG,CAClB,UAAU,CAAE,IAAI,AACjB,CAAC,AAED,sBAAQ,CAAC,AAAQ,GAAG,AAAC,CAAC,AAAQ,IAAI,AAAE,CAAC,AACpC,gBAAgB,CAAE,WAAW,CAC7B,OAAO,CAAE,CAAC,AACX,CAAC,AAED,sBAAQ,CAAC,AAAQ,EAAE,AAAE,CAAC,AACrB,WAAW,CAAE,GAAG,AACjB,CAAC,AAED,sBAAQ,CAAC,AAAQ,EAAE,AAAE,CAAC,AACrB,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,KAAK,CAAC,CAAC,AACpB,CAAC\"}"
+	code: ".content.svelte-h6ymk4 h2{font-size:1.4em;font-weight:500}table, caption, tbody, tfoot, thead, tr, th, td{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline}table{border-collapse:collapse;border-spacing:0}table{border-collapse:collapse;width:100%}tr{border-bottom:1px solid #ccc}th{font-weight:bold}th, td{text-align:left;padding:4px}",
+	map: "{\"version\":3,\"file\":\"[slug].svelte\",\"sources\":[\"[slug].svelte\"],\"sourcesContent\":[\"<script context=\\\"module\\\">\\r\\n  export async function preload({ params, query }) {\\r\\n    // the `slug` parameter is available because\\r\\n    // this file is called [slug].svelte\\r\\n    const res = await this.fetch(`blog/${params.slug}.json`);\\r\\n    const data = await res.json();\\r\\n\\r\\n    if (res.status === 200) {\\r\\n      return { post: data };\\r\\n    } else {\\r\\n      this.error(res.status, data.message);\\r\\n    }\\r\\n  }\\r\\n</script>\\r\\n\\r\\n<script>\\r\\n  import GradientHeading from \\\"../../components/GradientHeading.svelte\\\";\\r\\n  export let post;\\r\\n</script>\\r\\n\\r\\n<style>\\r\\n  /*\\r\\n\\t\\tBy default, CSS is locally scoped to the component,\\r\\n\\t\\tand any unused styles are dead-code-eliminated.\\r\\n\\t\\tIn this page, Svelte can't know which elements are\\r\\n\\t\\tgoing to appear inside the {{{post.html}}} block,\\r\\n\\t\\tso we have to use the :global(...) modifier to target\\r\\n\\t\\tall elements inside .content\\r\\n\\t*/\\r\\n  .content :global(h2) {\\r\\n    font-size: 1.4em;\\r\\n    font-weight: 500;\\r\\n  }\\r\\n\\r\\n  :global(table, caption, tbody, tfoot, thead, tr, th, td) {\\r\\n    margin: 0;\\r\\n    padding: 0;\\r\\n    border: 0;\\r\\n    font-size: 100%;\\r\\n    font: inherit;\\r\\n    vertical-align: baseline;\\r\\n  }\\r\\n  :global(table) {\\r\\n    border-collapse: collapse;\\r\\n    border-spacing: 0;\\r\\n  }\\r\\n\\r\\n  :global(table) {\\r\\n    border-collapse: collapse;\\r\\n    width: 100%;\\r\\n  }\\r\\n  :global(tr) {\\r\\n    border-bottom: 1px solid #ccc;\\r\\n  }\\r\\n\\r\\n  :global(th) {\\r\\n    font-weight: bold;\\r\\n  }\\r\\n  :global(th, td) {\\r\\n    text-align: left;\\r\\n    padding: 4px;\\r\\n  }\\r\\n</style>\\r\\n\\r\\n<svelte:head>\\r\\n  <title>{post.title}</title>\\r\\n  <style>\\r\\n    code[class*=\\\"language-\\\"],\\r\\n    pre[class*=\\\"language-\\\"] {\\r\\n      color: #f8f8f2;\\r\\n      background: none;\\r\\n      text-shadow: 0 1px rgba(0, 0, 0, 0.3);\\r\\n      font-family: Consolas, Monaco, \\\"Andale Mono\\\", \\\"Ubuntu Mono\\\", monospace;\\r\\n      font-size: 1em;\\r\\n      text-align: left;\\r\\n      white-space: pre;\\r\\n      word-spacing: normal;\\r\\n      word-break: normal;\\r\\n      word-wrap: normal;\\r\\n      line-height: 1.5;\\r\\n\\r\\n      -moz-tab-size: 4;\\r\\n      -o-tab-size: 4;\\r\\n      tab-size: 4;\\r\\n\\r\\n      -webkit-hyphens: none;\\r\\n      -moz-hyphens: none;\\r\\n      -ms-hyphens: none;\\r\\n      hyphens: none;\\r\\n    }\\r\\n\\r\\n    /* Code blocks */\\r\\n    pre[class*=\\\"language-\\\"] {\\r\\n      padding: 1em;\\r\\n      margin: 0.5em 0;\\r\\n      margin-bottom: 1.55rem;\\r\\n      overflow: auto;\\r\\n      border-radius: 0.3em;\\r\\n    }\\r\\n\\r\\n    :not(pre) > code[class*=\\\"language-\\\"],\\r\\n    pre[class*=\\\"language-\\\"] {\\r\\n      background: #272822;\\r\\n    }\\r\\n\\r\\n    /* Inline code */\\r\\n    :not(pre) > code[class*=\\\"language-\\\"] {\\r\\n      padding: 0.1em;\\r\\n      border-radius: 0.3em;\\r\\n      white-space: normal;\\r\\n    }\\r\\n\\r\\n    .token.comment,\\r\\n    .token.prolog,\\r\\n    .token.doctype,\\r\\n    .token.cdata {\\r\\n      color: slategray;\\r\\n    }\\r\\n\\r\\n    .token.punctuation {\\r\\n      color: #f8f8f2;\\r\\n    }\\r\\n\\r\\n    .namespace {\\r\\n      opacity: 0.7;\\r\\n    }\\r\\n\\r\\n    .token.property,\\r\\n    .token.tag,\\r\\n    .token.constant,\\r\\n    .token.symbol,\\r\\n    .token.deleted {\\r\\n      color: #f92672;\\r\\n    }\\r\\n\\r\\n    .token.boolean,\\r\\n    .token.number {\\r\\n      color: #ae81ff;\\r\\n    }\\r\\n\\r\\n    .token.selector,\\r\\n    .token.attr-name,\\r\\n    .token.string,\\r\\n    .token.char,\\r\\n    .token.builtin,\\r\\n    .token.inserted {\\r\\n      color: #a6e22e;\\r\\n    }\\r\\n\\r\\n    .token.operator,\\r\\n    .token.entity,\\r\\n    .token.url,\\r\\n    .language-css .token.string,\\r\\n    .style .token.string,\\r\\n    .token.variable {\\r\\n      color: #f8f8f2;\\r\\n    }\\r\\n\\r\\n    .token.atrule,\\r\\n    .token.attr-value,\\r\\n    .token.function,\\r\\n    .token.class-name {\\r\\n      color: #e6db74;\\r\\n    }\\r\\n\\r\\n    .token.keyword {\\r\\n      color: #66d9ef;\\r\\n    }\\r\\n\\r\\n    .token.regex,\\r\\n    .token.important {\\r\\n      color: #fd971f;\\r\\n    }\\r\\n\\r\\n    .token.important,\\r\\n    .token.bold {\\r\\n      font-weight: bold;\\r\\n    }\\r\\n    .token.italic {\\r\\n      font-style: italic;\\r\\n    }\\r\\n\\r\\n    .token.entity {\\r\\n      cursor: help;\\r\\n    }\\r\\n\\r\\n    p {\\r\\n      margin-bottom: 1.55rem;\\r\\n      font-size: 1.125rem;\\r\\n    }\\r\\n\\r\\n    h1,\\r\\n    h2,\\r\\n    h3,\\r\\n    h4,\\r\\n    h5,\\r\\n    h6 {\\r\\n      /* margin-top: 3.1rem;\\r\\n      margin-bottom: 1.55rem; */\\r\\n      font-weight: bold;\\r\\n    }\\r\\n\\r\\n    h1 {\\r\\n      font-size: 2.375rem;\\r\\n    }\\r\\n\\r\\n    h2 {\\r\\n      font-size: 2rem;\\r\\n    }\\r\\n\\r\\n    .content > * {\\r\\n      margin-bottom: 1.55rem;\\r\\n    }\\r\\n\\r\\n    img {\\r\\n      box-shadow: 0 2.8px 2.2px rgba(0, 0, 0, 0.034),\\r\\n        0 6.7px 5.3px rgba(0, 0, 0, 0.048), 0 12.5px 10px rgba(0, 0, 0, 0.06),\\r\\n        0 22.3px 17.9px rgba(0, 0, 0, 0.072),\\r\\n        0 41.8px 33.4px rgba(0, 0, 0, 0.086), 0 0px 50px rgba(0, 0, 0, 0.12);\\r\\n      border-radius: 4px;\\r\\n      width: 100%;\\r\\n    }\\r\\n  </style>\\r\\n</svelte:head>\\r\\n\\r\\n<div class=\\\"container mx-auto max-w-2xl py-8 lg:py-24 px-8\\\">\\r\\n  <GradientHeading>{post.title}</GradientHeading>\\r\\n\\r\\n  <div class=\\\"content\\\">\\r\\n    {@html post.html}\\r\\n  </div>\\r\\n</div>\\r\\n\"],\"names\":[],\"mappings\":\"AA6BE,sBAAQ,CAAC,AAAQ,EAAE,AAAE,CAAC,AACpB,SAAS,CAAE,KAAK,CAChB,WAAW,CAAE,GAAG,AAClB,CAAC,AAEO,+CAA+C,AAAE,CAAC,AACxD,MAAM,CAAE,CAAC,CACT,OAAO,CAAE,CAAC,CACV,MAAM,CAAE,CAAC,CACT,SAAS,CAAE,IAAI,CACf,IAAI,CAAE,OAAO,CACb,cAAc,CAAE,QAAQ,AAC1B,CAAC,AACO,KAAK,AAAE,CAAC,AACd,eAAe,CAAE,QAAQ,CACzB,cAAc,CAAE,CAAC,AACnB,CAAC,AAEO,KAAK,AAAE,CAAC,AACd,eAAe,CAAE,QAAQ,CACzB,KAAK,CAAE,IAAI,AACb,CAAC,AACO,EAAE,AAAE,CAAC,AACX,aAAa,CAAE,GAAG,CAAC,KAAK,CAAC,IAAI,AAC/B,CAAC,AAEO,EAAE,AAAE,CAAC,AACX,WAAW,CAAE,IAAI,AACnB,CAAC,AACO,MAAM,AAAE,CAAC,AACf,UAAU,CAAE,IAAI,CAChB,OAAO,CAAE,GAAG,AACd,CAAC\"}"
 };
 
 async function preload$1({ params, query }) {
+	// the `slug` parameter is available because
+	// this file is called [slug].svelte
 	const res = await this.fetch(`blog/${params.slug}.json`);
+
 	const data = await res.json();
 
 	if (res.status === 200) {
@@ -374,20 +389,173 @@ const U5Bslugu5D = create_ssr_component(($$result, $$props, $$bindings, $$slots)
 	if ($$props.post === void 0 && $$bindings.post && post !== void 0) $$bindings.post(post);
 	$$result.css.add(css$3);
 
-	return `${($$result.head += `<title>${escape(post.title)}</title>`, "")}
+	return `${($$result.head += `${($$result.title = `<title>${escape(post.title)}</title>`, "")}<style>code[class*="language-"],
+    pre[class*="language-"] {
+      color: #f8f8f2;
+      background: none;
+      text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+      font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+      font-size: 1em;
+      text-align: left;
+      white-space: pre;
+      word-spacing: normal;
+      word-break: normal;
+      word-wrap: normal;
+      line-height: 1.5;
 
-<h1>${escape(post.title)}</h1>
+      -moz-tab-size: 4;
+      -o-tab-size: 4;
+      tab-size: 4;
 
-<div class="${"content svelte-gnxal1"}">
-	${post.html}
-</div>`;
+      -webkit-hyphens: none;
+      -moz-hyphens: none;
+      -ms-hyphens: none;
+      hyphens: none;
+    }
+
+    /* Code blocks */
+    pre[class*="language-"] {
+      padding: 1em;
+      margin: 0.5em 0;
+      margin-bottom: 1.55rem;
+      overflow: auto;
+      border-radius: 0.3em;
+    }
+
+    :not(pre) > code[class*="language-"],
+    pre[class*="language-"] {
+      background: #272822;
+    }
+
+    /* Inline code */
+    :not(pre) > code[class*="language-"] {
+      padding: 0.1em;
+      border-radius: 0.3em;
+      white-space: normal;
+    }
+
+    .token.comment,
+    .token.prolog,
+    .token.doctype,
+    .token.cdata {
+      color: slategray;
+    }
+
+    .token.punctuation {
+      color: #f8f8f2;
+    }
+
+    .namespace {
+      opacity: 0.7;
+    }
+
+    .token.property,
+    .token.tag,
+    .token.constant,
+    .token.symbol,
+    .token.deleted {
+      color: #f92672;
+    }
+
+    .token.boolean,
+    .token.number {
+      color: #ae81ff;
+    }
+
+    .token.selector,
+    .token.attr-name,
+    .token.string,
+    .token.char,
+    .token.builtin,
+    .token.inserted {
+      color: #a6e22e;
+    }
+
+    .token.operator,
+    .token.entity,
+    .token.url,
+    .language-css .token.string,
+    .style .token.string,
+    .token.variable {
+      color: #f8f8f2;
+    }
+
+    .token.atrule,
+    .token.attr-value,
+    .token.function,
+    .token.class-name {
+      color: #e6db74;
+    }
+
+    .token.keyword {
+      color: #66d9ef;
+    }
+
+    .token.regex,
+    .token.important {
+      color: #fd971f;
+    }
+
+    .token.important,
+    .token.bold {
+      font-weight: bold;
+    }
+    .token.italic {
+      font-style: italic;
+    }
+
+    .token.entity {
+      cursor: help;
+    }
+
+    p {
+      margin-bottom: 1.55rem;
+      font-size: 1.125rem;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      /* margin-top: 3.1rem;
+      margin-bottom: 1.55rem; */
+      font-weight: bold;
+    }
+
+    h1 {
+      font-size: 2.375rem;
+    }
+
+    h2 {
+      font-size: 2rem;
+    }
+
+    .content > * {
+      margin-bottom: 1.55rem;
+    }
+
+    img {
+      box-shadow: 0 2.8px 2.2px rgba(0, 0, 0, 0.034),
+        0 6.7px 5.3px rgba(0, 0, 0, 0.048), 0 12.5px 10px rgba(0, 0, 0, 0.06),
+        0 22.3px 17.9px rgba(0, 0, 0, 0.072),
+        0 41.8px 33.4px rgba(0, 0, 0, 0.086), 0 0px 50px rgba(0, 0, 0, 0.12);
+      border-radius: 4px;
+      width: 100%;
+    }
+  </style>`, "")}
+
+<div class="${"container mx-auto max-w-2xl py-8 lg:py-24 px-8"}">${validate_component(GradientHeading, "GradientHeading").$$render($$result, {}, {}, { default: () => `${escape(post.title)}` })}
+
+  <div class="${"content svelte-h6ymk4"}">${post.html}</div></div>`;
 });
 
-/* src/components/Nav.svelte generated by Svelte v3.16.0 */
+/* src\components\Nav.svelte generated by Svelte v3.21.0 */
 
 const css$4 = {
-	code: "nav.svelte-zjmb21{border-bottom:1px solid rgba(160, 177, 255, 0.486);font-weight:300;padding:0 1em;max-height:57px}ul.svelte-zjmb21::after{content:\"\";display:block;clear:both}li.svelte-zjmb21{display:block;float:left;height:57px}.selected.svelte-zjmb21{position:relative;display:inline-block}.selected.svelte-zjmb21::after{position:absolute;content:\"\";width:calc(100% - 1em);height:2px;background-color:rgb(24, 119, 243);display:block;bottom:-1px}a.svelte-zjmb21{text-decoration:none;padding:1em 0.5em;display:block}.toggle.svelte-zjmb21{float:right}.toggle.svelte-zjmb21 button.svelte-zjmb21{border:none;background:none;height:100%;font-size:24px;cursor:pointer}",
-	map: "{\"version\":3,\"file\":\"Nav.svelte\",\"sources\":[\"Nav.svelte\"],\"sourcesContent\":[\"<script>\\n  export let segment;\\n  function toggle() {\\n    const localValue = localStorage.getItem(\\\"colorMode\\\");\\n\\n    if (localValue === \\\"dark\\\") {\\n      localStorage.setItem(\\\"colorMode\\\", \\\"light\\\");\\n    }\\n\\n    if (localValue === \\\"light\\\") {\\n      localStorage.setItem(\\\"colorMode\\\", \\\"dark\\\");\\n    }\\n\\n    window.document.body.classList.toggle(\\\"dark-mode\\\");\\n  }\\n</script>\\n\\n<style>\\n  nav {\\n    border-bottom: 1px solid rgba(160, 177, 255, 0.486);\\n    font-weight: 300;\\n    padding: 0 1em;\\n    max-height: 57px;\\n  }\\n\\n  /* clearfix */\\n  ul::after {\\n    content: \\\"\\\";\\n    display: block;\\n    clear: both;\\n  }\\n\\n  li {\\n    display: block;\\n    float: left;\\n    height: 57px;\\n  }\\n\\n  .selected {\\n    position: relative;\\n    display: inline-block;\\n  }\\n\\n  .selected::after {\\n    position: absolute;\\n    content: \\\"\\\";\\n    width: calc(100% - 1em);\\n    height: 2px;\\n    background-color: rgb(24, 119, 243);\\n    display: block;\\n    bottom: -1px;\\n  }\\n\\n  a {\\n    text-decoration: none;\\n    padding: 1em 0.5em;\\n    display: block;\\n  }\\n\\n  .toggle {\\n    float: right;\\n  }\\n\\n  .toggle button {\\n    border: none;\\n    background: none;\\n    height: 100%;\\n    font-size: 24px;\\n    cursor: pointer;\\n  }\\n</style>\\n\\n<nav>\\n  <ul class=\\\"max-w-6xl mx-auto\\\">\\n    <li>\\n      <a class:selected={segment === undefined} href=\\\".\\\">Home</a>\\n    </li>\\n\\n    <!-- for the blog link, we're using rel=prefetch so that Sapper prefetches\\n\\t\\t     the blog data when we hover over the link or tap it on a touchscreen -->\\n    <li>\\n      <a rel=\\\"prefetch\\\" class:selected={segment === 'blog'} href=\\\"blog\\\">Blog</a>\\n    </li>\\n\\n    <li class=\\\"toggle\\\">\\n      <button on:click={toggle}>🌓</button>\\n    </li>\\n  </ul>\\n</nav>\\n\"],\"names\":[],\"mappings\":\"AAkBE,GAAG,cAAC,CAAC,AACH,aAAa,CAAE,GAAG,CAAC,KAAK,CAAC,KAAK,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,KAAK,CAAC,CACnD,WAAW,CAAE,GAAG,CAChB,OAAO,CAAE,CAAC,CAAC,GAAG,CACd,UAAU,CAAE,IAAI,AAClB,CAAC,AAGD,gBAAE,OAAO,AAAC,CAAC,AACT,OAAO,CAAE,EAAE,CACX,OAAO,CAAE,KAAK,CACd,KAAK,CAAE,IAAI,AACb,CAAC,AAED,EAAE,cAAC,CAAC,AACF,OAAO,CAAE,KAAK,CACd,KAAK,CAAE,IAAI,CACX,MAAM,CAAE,IAAI,AACd,CAAC,AAED,SAAS,cAAC,CAAC,AACT,QAAQ,CAAE,QAAQ,CAClB,OAAO,CAAE,YAAY,AACvB,CAAC,AAED,uBAAS,OAAO,AAAC,CAAC,AAChB,QAAQ,CAAE,QAAQ,CAClB,OAAO,CAAE,EAAE,CACX,KAAK,CAAE,KAAK,IAAI,CAAC,CAAC,CAAC,GAAG,CAAC,CACvB,MAAM,CAAE,GAAG,CACX,gBAAgB,CAAE,IAAI,EAAE,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,CACnC,OAAO,CAAE,KAAK,CACd,MAAM,CAAE,IAAI,AACd,CAAC,AAED,CAAC,cAAC,CAAC,AACD,eAAe,CAAE,IAAI,CACrB,OAAO,CAAE,GAAG,CAAC,KAAK,CAClB,OAAO,CAAE,KAAK,AAChB,CAAC,AAED,OAAO,cAAC,CAAC,AACP,KAAK,CAAE,KAAK,AACd,CAAC,AAED,qBAAO,CAAC,MAAM,cAAC,CAAC,AACd,MAAM,CAAE,IAAI,CACZ,UAAU,CAAE,IAAI,CAChB,MAAM,CAAE,IAAI,CACZ,SAAS,CAAE,IAAI,CACf,MAAM,CAAE,OAAO,AACjB,CAAC\"}"
+	code: "nav.svelte-1li8552{border-bottom:1px solid rgba(160, 177, 255, 0.486);font-weight:300;padding:0 1em;max-height:57px}ul.svelte-1li8552::after{content:\"\";display:block;clear:both}li.svelte-1li8552{display:block;float:left;height:57px}.selected.svelte-1li8552{position:relative;display:inline-block}.selected.svelte-1li8552::after{position:absolute;content:\"\";width:calc(100% - 1em);height:2px;background-color:rgb(24, 119, 243);display:block;bottom:-1px}a.svelte-1li8552{text-decoration:none;padding:1em 0.5em;display:block}",
+	map: "{\"version\":3,\"file\":\"Nav.svelte\",\"sources\":[\"Nav.svelte\"],\"sourcesContent\":[\"<script>\\r\\n  export let segment;\\r\\n</script>\\r\\n\\r\\n<style>\\r\\n  nav {\\r\\n    border-bottom: 1px solid rgba(160, 177, 255, 0.486);\\r\\n    font-weight: 300;\\r\\n    padding: 0 1em;\\r\\n    max-height: 57px;\\r\\n  }\\r\\n\\r\\n  /* clearfix */\\r\\n  ul::after {\\r\\n    content: \\\"\\\";\\r\\n    display: block;\\r\\n    clear: both;\\r\\n  }\\r\\n\\r\\n  li {\\r\\n    display: block;\\r\\n    float: left;\\r\\n    height: 57px;\\r\\n  }\\r\\n\\r\\n  .selected {\\r\\n    position: relative;\\r\\n    display: inline-block;\\r\\n  }\\r\\n\\r\\n  .selected::after {\\r\\n    position: absolute;\\r\\n    content: \\\"\\\";\\r\\n    width: calc(100% - 1em);\\r\\n    height: 2px;\\r\\n    background-color: rgb(24, 119, 243);\\r\\n    display: block;\\r\\n    bottom: -1px;\\r\\n  }\\r\\n\\r\\n  a {\\r\\n    text-decoration: none;\\r\\n    padding: 1em 0.5em;\\r\\n    display: block;\\r\\n  }\\r\\n\\r\\n  .toggle {\\r\\n    float: right;\\r\\n  }\\r\\n\\r\\n  .toggle button {\\r\\n    border: none;\\r\\n    background: none;\\r\\n    height: 100%;\\r\\n    font-size: 24px;\\r\\n    cursor: pointer;\\r\\n  }\\r\\n</style>\\r\\n\\r\\n<nav>\\r\\n  <ul class=\\\"px-4\\\">\\r\\n    <li>\\r\\n      <a class:selected={segment === undefined} href=\\\".\\\">Home</a>\\r\\n    </li>\\r\\n\\r\\n    <!-- for the blog link, we're using rel=prefetch so that Sapper prefetches\\r\\n\\t\\t     the blog data when we hover over the link or tap it on a touchscreen -->\\r\\n    <li>\\r\\n      <a rel=\\\"prefetch\\\" class:selected={segment === 'blog'} href=\\\"blog\\\">Blog</a>\\r\\n    </li>\\r\\n  </ul>\\r\\n</nav>\\r\\n\"],\"names\":[],\"mappings\":\"AAKE,GAAG,eAAC,CAAC,AACH,aAAa,CAAE,GAAG,CAAC,KAAK,CAAC,KAAK,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,CAAC,KAAK,CAAC,CACnD,WAAW,CAAE,GAAG,CAChB,OAAO,CAAE,CAAC,CAAC,GAAG,CACd,UAAU,CAAE,IAAI,AAClB,CAAC,AAGD,iBAAE,OAAO,AAAC,CAAC,AACT,OAAO,CAAE,EAAE,CACX,OAAO,CAAE,KAAK,CACd,KAAK,CAAE,IAAI,AACb,CAAC,AAED,EAAE,eAAC,CAAC,AACF,OAAO,CAAE,KAAK,CACd,KAAK,CAAE,IAAI,CACX,MAAM,CAAE,IAAI,AACd,CAAC,AAED,SAAS,eAAC,CAAC,AACT,QAAQ,CAAE,QAAQ,CAClB,OAAO,CAAE,YAAY,AACvB,CAAC,AAED,wBAAS,OAAO,AAAC,CAAC,AAChB,QAAQ,CAAE,QAAQ,CAClB,OAAO,CAAE,EAAE,CACX,KAAK,CAAE,KAAK,IAAI,CAAC,CAAC,CAAC,GAAG,CAAC,CACvB,MAAM,CAAE,GAAG,CACX,gBAAgB,CAAE,IAAI,EAAE,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,CACnC,OAAO,CAAE,KAAK,CACd,MAAM,CAAE,IAAI,AACd,CAAC,AAED,CAAC,eAAC,CAAC,AACD,eAAe,CAAE,IAAI,CACrB,OAAO,CAAE,GAAG,CAAC,KAAK,CAClB,OAAO,CAAE,KAAK,AAChB,CAAC\"}"
 };
 
 const Nav = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
@@ -395,90 +563,28 @@ const Nav = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 	if ($$props.segment === void 0 && $$bindings.segment && segment !== void 0) $$bindings.segment(segment);
 	$$result.css.add(css$4);
 
-	return `<nav class="${"svelte-zjmb21"}">
-  <ul class="${"max-w-6xl mx-auto svelte-zjmb21"}">
-    <li class="${"svelte-zjmb21"}">
-      <a href="${"."}" class="${["svelte-zjmb21", segment === undefined ? "selected" : ""].join(" ").trim()}">Home</a>
-    </li>
+	return `<nav class="${"svelte-1li8552"}"><ul class="${"px-4 svelte-1li8552"}"><li class="${"svelte-1li8552"}"><a href="${"."}" class="${["svelte-1li8552", segment === undefined ? "selected" : ""].join(" ").trim()}">Home</a></li>
 
     
-    <li class="${"svelte-zjmb21"}">
-      <a rel="${"prefetch"}" href="${"blog"}" class="${["svelte-zjmb21", segment === "blog" ? "selected" : ""].join(" ").trim()}">Blog</a>
-    </li>
-
-    <li class="${"toggle svelte-zjmb21"}">
-      <button class="${"svelte-zjmb21"}">🌓</button>
-    </li>
-  </ul>
-</nav>`;
+    <li class="${"svelte-1li8552"}"><a rel="${"prefetch"}" href="${"blog"}" class="${["svelte-1li8552", segment === "blog" ? "selected" : ""].join(" ").trim()}">Blog</a></li></ul></nav>`;
 });
 
-/* src/routes/_layout.svelte generated by Svelte v3.16.0 */
-
-function activateDarkMode() {
-	document.body.className = "dark-mode";
-	localStorage.setItem("colorMode", "dark");
-}
-
-function activateLightMode() {
-	document.body.className = "";
-	localStorage.setItem("colorMode", "light");
-}
-
-function setColorScheme() {
-	const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
-	const isLightMode = window.matchMedia("(prefers-color-scheme: light)").matches;
-	const isNotSpecified = window.matchMedia("(prefers-color-scheme: no-preference)").matches;
-	const localValue = localStorage.getItem("colorMode");
-
-	if (localValue === "dark") {
-		activateDarkMode();
-		return;
-	}
-
-	if (localValue === "light") {
-		activateLightMode();
-		return;
-	}
-
-	const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified;
-	window.matchMedia("(prefers-color-scheme: dark)").addListener(e => e.matches && activateDarkMode());
-	window.matchMedia("(prefers-color-scheme: light)").addListener(e => e.matches && activateLightMode());
-	if (isDarkMode) activateDarkMode();
-	if (isLightMode) activateLightMode();
-
-	if (isNotSpecified || hasNoSupport) {
-		console.log("You specified no preference for a color scheme or your browser does not support it. I schedule dark mode during night time.");
-		now = new Date();
-		hour = now.getHours();
-
-		if (hour < 4 || hour >= 16) {
-			activateDarkMode();
-		}
-	}
-}
+/* src\routes\_layout.svelte generated by Svelte v3.21.0 */
 
 const Layout = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 	let { segment } = $$props;
-
-	onMount(() => {
-		setColorScheme();
-	});
-
 	if ($$props.segment === void 0 && $$bindings.segment && segment !== void 0) $$bindings.segment(segment);
 
 	return `${validate_component(Nav, "Nav").$$render($$result, { segment }, {}, {})}
 
-<main class="${"container max-w-6xl mx-auto py-16"}">
-  ${$$slots.default ? $$slots.default({}) : ``}
-</main>`;
+<main>${$$slots.default ? $$slots.default({}) : ``}</main>`;
 });
 
-/* src/routes/_error.svelte generated by Svelte v3.16.0 */
+/* src\routes\_error.svelte generated by Svelte v3.21.0 */
 
 const css$5 = {
-	code: "h1.svelte-8od9u6,p.svelte-8od9u6{margin:0 auto}h1.svelte-8od9u6{font-size:2.8em;font-weight:700;margin:0 0 0.5em 0}p.svelte-8od9u6{margin:1em auto}@media(min-width: 480px){h1.svelte-8od9u6{font-size:4em}}",
-	map: "{\"version\":3,\"file\":\"_error.svelte\",\"sources\":[\"_error.svelte\"],\"sourcesContent\":[\"<script>\\n\\texport let status;\\n\\texport let error;\\n\\n\\tconst dev = undefined === 'development';\\n</script>\\n\\n<style>\\n\\th1, p {\\n\\t\\tmargin: 0 auto;\\n\\t}\\n\\n\\th1 {\\n\\t\\tfont-size: 2.8em;\\n\\t\\tfont-weight: 700;\\n\\t\\tmargin: 0 0 0.5em 0;\\n\\t}\\n\\n\\tp {\\n\\t\\tmargin: 1em auto;\\n\\t}\\n\\n\\t@media (min-width: 480px) {\\n\\t\\th1 {\\n\\t\\t\\tfont-size: 4em;\\n\\t\\t}\\n\\t}\\n</style>\\n\\n<svelte:head>\\n\\t<title>{status}</title>\\n</svelte:head>\\n\\n<h1>{status}</h1>\\n\\n<p>{error.message}</p>\\n\\n{#if dev && error.stack}\\n\\t<pre>{error.stack}</pre>\\n{/if}\\n\"],\"names\":[],\"mappings\":\"AAQC,gBAAE,CAAE,CAAC,cAAC,CAAC,AACN,MAAM,CAAE,CAAC,CAAC,IAAI,AACf,CAAC,AAED,EAAE,cAAC,CAAC,AACH,SAAS,CAAE,KAAK,CAChB,WAAW,CAAE,GAAG,CAChB,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,KAAK,CAAC,CAAC,AACpB,CAAC,AAED,CAAC,cAAC,CAAC,AACF,MAAM,CAAE,GAAG,CAAC,IAAI,AACjB,CAAC,AAED,MAAM,AAAC,YAAY,KAAK,CAAC,AAAC,CAAC,AAC1B,EAAE,cAAC,CAAC,AACH,SAAS,CAAE,GAAG,AACf,CAAC,AACF,CAAC\"}"
+	code: "h1.svelte-13vgy2g,p.svelte-13vgy2g{margin:0 auto}h1.svelte-13vgy2g{font-size:2.8em;font-weight:700;margin:0 0 0.5em 0}p.svelte-13vgy2g{margin:1em auto}@media(min-width: 480px){h1.svelte-13vgy2g{font-size:4em}}",
+	map: "{\"version\":3,\"file\":\"_error.svelte\",\"sources\":[\"_error.svelte\"],\"sourcesContent\":[\"<script>\\r\\n\\texport let status;\\r\\n\\texport let error;\\r\\n\\r\\n\\tconst dev = undefined === 'development';\\r\\n</script>\\r\\n\\r\\n<style>\\r\\n\\th1, p {\\r\\n\\t\\tmargin: 0 auto;\\r\\n\\t}\\r\\n\\r\\n\\th1 {\\r\\n\\t\\tfont-size: 2.8em;\\r\\n\\t\\tfont-weight: 700;\\r\\n\\t\\tmargin: 0 0 0.5em 0;\\r\\n\\t}\\r\\n\\r\\n\\tp {\\r\\n\\t\\tmargin: 1em auto;\\r\\n\\t}\\r\\n\\r\\n\\t@media (min-width: 480px) {\\r\\n\\t\\th1 {\\r\\n\\t\\t\\tfont-size: 4em;\\r\\n\\t\\t}\\r\\n\\t}\\r\\n</style>\\r\\n\\r\\n<svelte:head>\\r\\n\\t<title>{status}</title>\\r\\n</svelte:head>\\r\\n\\r\\n<h1>{status}</h1>\\r\\n\\r\\n<p>{error.message}</p>\\r\\n\\r\\n{#if dev && error.stack}\\r\\n\\t<pre>{error.stack}</pre>\\r\\n{/if}\\r\\n\"],\"names\":[],\"mappings\":\"AAQC,iBAAE,CAAE,CAAC,eAAC,CAAC,AACN,MAAM,CAAE,CAAC,CAAC,IAAI,AACf,CAAC,AAED,EAAE,eAAC,CAAC,AACH,SAAS,CAAE,KAAK,CAChB,WAAW,CAAE,GAAG,CAChB,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,KAAK,CAAC,CAAC,AACpB,CAAC,AAED,CAAC,eAAC,CAAC,AACF,MAAM,CAAE,GAAG,CAAC,IAAI,AACjB,CAAC,AAED,MAAM,AAAC,YAAY,KAAK,CAAC,AAAC,CAAC,AAC1B,EAAE,eAAC,CAAC,AACH,SAAS,CAAE,GAAG,AACf,CAAC,AACF,CAAC\"}"
 };
 
 const Error$1 = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
@@ -488,11 +594,11 @@ const Error$1 = create_ssr_component(($$result, $$props, $$bindings, $$slots) =>
 	if ($$props.error === void 0 && $$bindings.error && error !== void 0) $$bindings.error(error);
 	$$result.css.add(css$5);
 
-	return `${($$result.head += `<title>${escape(status)}</title>`, "")}
+	return `${($$result.head += `${($$result.title = `<title>${escape(status)}</title>`, "")}`, "")}
 
-<h1 class="${"svelte-8od9u6"}">${escape(status)}</h1>
+<h1 class="${"svelte-13vgy2g"}">${escape(status)}</h1>
 
-<p class="${"svelte-8od9u6"}">${escape(error.message)}</p>
+<p class="${"svelte-13vgy2g"}">${escape(error.message)}</p>
 
 ${ ``}`;
 });
@@ -511,9 +617,16 @@ const manifest = {
 		},
 
 		{
+			// blog/posts/using-array_map.md
+			pattern: /^\/blog\/posts\/using-array_map\/?$/,
+			handlers: route_1,
+			params: () => ({})
+		},
+
+		{
 			// blog/[slug].json.js
 			pattern: /^\/blog\/([^\/]+?).json$/,
-			handlers: route_1,
+			handlers: route_2,
 			params: match => ({ slug: d(match[1]) })
 		}
 	],
@@ -606,7 +719,7 @@ function writable(value, start = noop) {
 
 const CONTEXT_KEY = {};
 
-/* src/node_modules/@sapper/internal/App.svelte generated by Svelte v3.16.0 */
+/* src\node_modules\@sapper\internal\App.svelte generated by Svelte v3.21.0 */
 
 const App = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 	let { stores } = $$props;
@@ -627,13 +740,109 @@ const App = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 
 
 ${validate_component(Layout, "Layout").$$render($$result, Object.assign({ segment: segments[0] }, level0.props), {}, {
-		default: () => `
-	${error
+		default: () => `${error
 		? `${validate_component(Error$1, "Error").$$render($$result, { error, status }, {}, {})}`
-		: `${validate_component(level1.component || missing_component, "svelte:component").$$render($$result, Object.assign(level1.props), {}, {})}`}
-`
+		: `${validate_component(level1.component || missing_component, "svelte:component").$$render($$result, Object.assign(level1.props), {}, {})}`}`
 	})}`;
 });
+
+/**
+ * @param typeMap [Object] Map of MIME type -> Array[extensions]
+ * @param ...
+ */
+function Mime() {
+  this._types = Object.create(null);
+  this._extensions = Object.create(null);
+
+  for (var i = 0; i < arguments.length; i++) {
+    this.define(arguments[i]);
+  }
+
+  this.define = this.define.bind(this);
+  this.getType = this.getType.bind(this);
+  this.getExtension = this.getExtension.bind(this);
+}
+
+/**
+ * Define mimetype -> extension mappings.  Each key is a mime-type that maps
+ * to an array of extensions associated with the type.  The first extension is
+ * used as the default extension for the type.
+ *
+ * e.g. mime.define({'audio/ogg', ['oga', 'ogg', 'spx']});
+ *
+ * If a type declares an extension that has already been defined, an error will
+ * be thrown.  To suppress this error and force the extension to be associated
+ * with the new type, pass `force`=true.  Alternatively, you may prefix the
+ * extension with "*" to map the type to extension, without mapping the
+ * extension to the type.
+ *
+ * e.g. mime.define({'audio/wav', ['wav']}, {'audio/x-wav', ['*wav']});
+ *
+ *
+ * @param map (Object) type definitions
+ * @param force (Boolean) if true, force overriding of existing definitions
+ */
+Mime.prototype.define = function(typeMap, force) {
+  for (var type in typeMap) {
+    var extensions = typeMap[type].map(function(t) {return t.toLowerCase()});
+    type = type.toLowerCase();
+
+    for (var i = 0; i < extensions.length; i++) {
+      var ext = extensions[i];
+
+      // '*' prefix = not the preferred type for this extension.  So fixup the
+      // extension, and skip it.
+      if (ext[0] == '*') {
+        continue;
+      }
+
+      if (!force && (ext in this._types)) {
+        throw new Error(
+          'Attempt to change mapping for "' + ext +
+          '" extension from "' + this._types[ext] + '" to "' + type +
+          '". Pass `force=true` to allow this, otherwise remove "' + ext +
+          '" from the list of extensions for "' + type + '".'
+        );
+      }
+
+      this._types[ext] = type;
+    }
+
+    // Use first extension as default
+    if (force || !this._extensions[type]) {
+      var ext = extensions[0];
+      this._extensions[type] = (ext[0] != '*') ? ext : ext.substr(1);
+    }
+  }
+};
+
+/**
+ * Lookup a mime type based on extension
+ */
+Mime.prototype.getType = function(path) {
+  path = String(path);
+  var last = path.replace(/^.*[/\\]/, '').toLowerCase();
+  var ext = last.replace(/^.*\./, '').toLowerCase();
+
+  var hasPath = last.length < path.length;
+  var hasDot = ext.length < last.length - 1;
+
+  return (hasDot || !hasPath) && this._types[ext] || null;
+};
+
+/**
+ * Return file extension associated with a mime type
+ */
+Mime.prototype.getExtension = function(type) {
+  type = /^\s*([^;\s]*)/.test(type) && RegExp.$1;
+  return type && this._extensions[type.toLowerCase()] || null;
+};
+
+var Mime_1 = Mime;
+
+var standard = {"application/andrew-inset":["ez"],"application/applixware":["aw"],"application/atom+xml":["atom"],"application/atomcat+xml":["atomcat"],"application/atomsvc+xml":["atomsvc"],"application/bdoc":["bdoc"],"application/ccxml+xml":["ccxml"],"application/cdmi-capability":["cdmia"],"application/cdmi-container":["cdmic"],"application/cdmi-domain":["cdmid"],"application/cdmi-object":["cdmio"],"application/cdmi-queue":["cdmiq"],"application/cu-seeme":["cu"],"application/dash+xml":["mpd"],"application/davmount+xml":["davmount"],"application/docbook+xml":["dbk"],"application/dssc+der":["dssc"],"application/dssc+xml":["xdssc"],"application/ecmascript":["ecma","es"],"application/emma+xml":["emma"],"application/epub+zip":["epub"],"application/exi":["exi"],"application/font-tdpfr":["pfr"],"application/geo+json":["geojson"],"application/gml+xml":["gml"],"application/gpx+xml":["gpx"],"application/gxf":["gxf"],"application/gzip":["gz"],"application/hjson":["hjson"],"application/hyperstudio":["stk"],"application/inkml+xml":["ink","inkml"],"application/ipfix":["ipfix"],"application/java-archive":["jar","war","ear"],"application/java-serialized-object":["ser"],"application/java-vm":["class"],"application/javascript":["js","mjs"],"application/json":["json","map"],"application/json5":["json5"],"application/jsonml+json":["jsonml"],"application/ld+json":["jsonld"],"application/lost+xml":["lostxml"],"application/mac-binhex40":["hqx"],"application/mac-compactpro":["cpt"],"application/mads+xml":["mads"],"application/manifest+json":["webmanifest"],"application/marc":["mrc"],"application/marcxml+xml":["mrcx"],"application/mathematica":["ma","nb","mb"],"application/mathml+xml":["mathml"],"application/mbox":["mbox"],"application/mediaservercontrol+xml":["mscml"],"application/metalink+xml":["metalink"],"application/metalink4+xml":["meta4"],"application/mets+xml":["mets"],"application/mods+xml":["mods"],"application/mp21":["m21","mp21"],"application/mp4":["mp4s","m4p"],"application/msword":["doc","dot"],"application/mxf":["mxf"],"application/n-quads":["nq"],"application/n-triples":["nt"],"application/octet-stream":["bin","dms","lrf","mar","so","dist","distz","pkg","bpk","dump","elc","deploy","exe","dll","deb","dmg","iso","img","msi","msp","msm","buffer"],"application/oda":["oda"],"application/oebps-package+xml":["opf"],"application/ogg":["ogx"],"application/omdoc+xml":["omdoc"],"application/onenote":["onetoc","onetoc2","onetmp","onepkg"],"application/oxps":["oxps"],"application/patch-ops-error+xml":["xer"],"application/pdf":["pdf"],"application/pgp-encrypted":["pgp"],"application/pgp-signature":["asc","sig"],"application/pics-rules":["prf"],"application/pkcs10":["p10"],"application/pkcs7-mime":["p7m","p7c"],"application/pkcs7-signature":["p7s"],"application/pkcs8":["p8"],"application/pkix-attr-cert":["ac"],"application/pkix-cert":["cer"],"application/pkix-crl":["crl"],"application/pkix-pkipath":["pkipath"],"application/pkixcmp":["pki"],"application/pls+xml":["pls"],"application/postscript":["ai","eps","ps"],"application/pskc+xml":["pskcxml"],"application/raml+yaml":["raml"],"application/rdf+xml":["rdf","owl"],"application/reginfo+xml":["rif"],"application/relax-ng-compact-syntax":["rnc"],"application/resource-lists+xml":["rl"],"application/resource-lists-diff+xml":["rld"],"application/rls-services+xml":["rs"],"application/rpki-ghostbusters":["gbr"],"application/rpki-manifest":["mft"],"application/rpki-roa":["roa"],"application/rsd+xml":["rsd"],"application/rss+xml":["rss"],"application/rtf":["rtf"],"application/sbml+xml":["sbml"],"application/scvp-cv-request":["scq"],"application/scvp-cv-response":["scs"],"application/scvp-vp-request":["spq"],"application/scvp-vp-response":["spp"],"application/sdp":["sdp"],"application/set-payment-initiation":["setpay"],"application/set-registration-initiation":["setreg"],"application/shf+xml":["shf"],"application/sieve":["siv","sieve"],"application/smil+xml":["smi","smil"],"application/sparql-query":["rq"],"application/sparql-results+xml":["srx"],"application/srgs":["gram"],"application/srgs+xml":["grxml"],"application/sru+xml":["sru"],"application/ssdl+xml":["ssdl"],"application/ssml+xml":["ssml"],"application/tei+xml":["tei","teicorpus"],"application/thraud+xml":["tfi"],"application/timestamped-data":["tsd"],"application/voicexml+xml":["vxml"],"application/wasm":["wasm"],"application/widget":["wgt"],"application/winhlp":["hlp"],"application/wsdl+xml":["wsdl"],"application/wspolicy+xml":["wspolicy"],"application/xaml+xml":["xaml"],"application/xcap-diff+xml":["xdf"],"application/xenc+xml":["xenc"],"application/xhtml+xml":["xhtml","xht"],"application/xml":["xml","xsl","xsd","rng"],"application/xml-dtd":["dtd"],"application/xop+xml":["xop"],"application/xproc+xml":["xpl"],"application/xslt+xml":["xslt"],"application/xspf+xml":["xspf"],"application/xv+xml":["mxml","xhvml","xvml","xvm"],"application/yang":["yang"],"application/yin+xml":["yin"],"application/zip":["zip"],"audio/3gpp":["*3gpp"],"audio/adpcm":["adp"],"audio/basic":["au","snd"],"audio/midi":["mid","midi","kar","rmi"],"audio/mp3":["*mp3"],"audio/mp4":["m4a","mp4a"],"audio/mpeg":["mpga","mp2","mp2a","mp3","m2a","m3a"],"audio/ogg":["oga","ogg","spx"],"audio/s3m":["s3m"],"audio/silk":["sil"],"audio/wav":["wav"],"audio/wave":["*wav"],"audio/webm":["weba"],"audio/xm":["xm"],"font/collection":["ttc"],"font/otf":["otf"],"font/ttf":["ttf"],"font/woff":["woff"],"font/woff2":["woff2"],"image/aces":["exr"],"image/apng":["apng"],"image/bmp":["bmp"],"image/cgm":["cgm"],"image/dicom-rle":["drle"],"image/emf":["emf"],"image/fits":["fits"],"image/g3fax":["g3"],"image/gif":["gif"],"image/heic":["heic"],"image/heic-sequence":["heics"],"image/heif":["heif"],"image/heif-sequence":["heifs"],"image/ief":["ief"],"image/jls":["jls"],"image/jp2":["jp2","jpg2"],"image/jpeg":["jpeg","jpg","jpe"],"image/jpm":["jpm"],"image/jpx":["jpx","jpf"],"image/jxr":["jxr"],"image/ktx":["ktx"],"image/png":["png"],"image/sgi":["sgi"],"image/svg+xml":["svg","svgz"],"image/t38":["t38"],"image/tiff":["tif","tiff"],"image/tiff-fx":["tfx"],"image/webp":["webp"],"image/wmf":["wmf"],"message/disposition-notification":["disposition-notification"],"message/global":["u8msg"],"message/global-delivery-status":["u8dsn"],"message/global-disposition-notification":["u8mdn"],"message/global-headers":["u8hdr"],"message/rfc822":["eml","mime"],"model/3mf":["3mf"],"model/gltf+json":["gltf"],"model/gltf-binary":["glb"],"model/iges":["igs","iges"],"model/mesh":["msh","mesh","silo"],"model/stl":["stl"],"model/vrml":["wrl","vrml"],"model/x3d+binary":["*x3db","x3dbz"],"model/x3d+fastinfoset":["x3db"],"model/x3d+vrml":["*x3dv","x3dvz"],"model/x3d+xml":["x3d","x3dz"],"model/x3d-vrml":["x3dv"],"text/cache-manifest":["appcache","manifest"],"text/calendar":["ics","ifb"],"text/coffeescript":["coffee","litcoffee"],"text/css":["css"],"text/csv":["csv"],"text/html":["html","htm","shtml"],"text/jade":["jade"],"text/jsx":["jsx"],"text/less":["less"],"text/markdown":["markdown","md"],"text/mathml":["mml"],"text/mdx":["mdx"],"text/n3":["n3"],"text/plain":["txt","text","conf","def","list","log","in","ini"],"text/richtext":["rtx"],"text/rtf":["*rtf"],"text/sgml":["sgml","sgm"],"text/shex":["shex"],"text/slim":["slim","slm"],"text/stylus":["stylus","styl"],"text/tab-separated-values":["tsv"],"text/troff":["t","tr","roff","man","me","ms"],"text/turtle":["ttl"],"text/uri-list":["uri","uris","urls"],"text/vcard":["vcard"],"text/vtt":["vtt"],"text/xml":["*xml"],"text/yaml":["yaml","yml"],"video/3gpp":["3gp","3gpp"],"video/3gpp2":["3g2"],"video/h261":["h261"],"video/h263":["h263"],"video/h264":["h264"],"video/jpeg":["jpgv"],"video/jpm":["*jpm","jpgm"],"video/mj2":["mj2","mjp2"],"video/mp2t":["ts"],"video/mp4":["mp4","mp4v","mpg4"],"video/mpeg":["mpeg","mpg","mpe","m1v","m2v"],"video/ogg":["ogv"],"video/quicktime":["qt","mov"],"video/webm":["webm"]};
+
+var lite = new Mime_1(standard);
 
 function get_server_route_handler(routes) {
 	async function handle_route(route, req, res, next) {
@@ -2764,11 +2973,11 @@ function get_page_handler(
 	manifest,
 	session_getter
 ) {
-	const get_build_info =  (assets => () => assets)(JSON.parse(fs.readFileSync(path.join(build_dir, 'build.json'), 'utf-8')));
+	const get_build_info =  (assets => () => assets)(JSON.parse(fs$1.readFileSync(path$1.join(build_dir, 'build.json'), 'utf-8')));
 
 	const template =  (str => () => str)(read_template(build_dir));
 
-	const has_service_worker = fs.existsSync(path.join(build_dir, 'service-worker.js'));
+	const has_service_worker = fs$1.existsSync(path$1.join(build_dir, 'service-worker.js'));
 
 	const { server_routes, pages } = manifest;
 	const error_route = manifest.error;
@@ -3104,7 +3313,7 @@ function get_page_handler(
 }
 
 function read_template(dir = build_dir) {
-	return fs.readFileSync(`${dir}/template.html`, 'utf-8');
+	return fs$1.readFileSync(`${dir}/template.html`, 'utf-8');
 }
 
 function try_serialize(data, fail) {
@@ -3114,27 +3323,6 @@ function try_serialize(data, fail) {
 		if (fail) fail(err);
 		return null;
 	}
-}
-
-var mime_raw = "application/andrew-inset\t\t\tez\napplication/applixware\t\t\t\taw\napplication/atom+xml\t\t\t\tatom\napplication/atomcat+xml\t\t\t\tatomcat\napplication/atomsvc+xml\t\t\t\tatomsvc\napplication/ccxml+xml\t\t\t\tccxml\napplication/cdmi-capability\t\t\tcdmia\napplication/cdmi-container\t\t\tcdmic\napplication/cdmi-domain\t\t\t\tcdmid\napplication/cdmi-object\t\t\t\tcdmio\napplication/cdmi-queue\t\t\t\tcdmiq\napplication/cu-seeme\t\t\t\tcu\napplication/davmount+xml\t\t\tdavmount\napplication/docbook+xml\t\t\t\tdbk\napplication/dssc+der\t\t\t\tdssc\napplication/dssc+xml\t\t\t\txdssc\napplication/ecmascript\t\t\t\tecma\napplication/emma+xml\t\t\t\temma\napplication/epub+zip\t\t\t\tepub\napplication/exi\t\t\t\t\texi\napplication/font-tdpfr\t\t\t\tpfr\napplication/gml+xml\t\t\t\tgml\napplication/gpx+xml\t\t\t\tgpx\napplication/gxf\t\t\t\t\tgxf\napplication/hyperstudio\t\t\t\tstk\napplication/inkml+xml\t\t\t\tink inkml\napplication/ipfix\t\t\t\tipfix\napplication/java-archive\t\t\tjar\napplication/java-serialized-object\t\tser\napplication/java-vm\t\t\t\tclass\napplication/javascript\t\t\t\tjs\napplication/json\t\t\t\tjson map\napplication/jsonml+json\t\t\t\tjsonml\napplication/lost+xml\t\t\t\tlostxml\napplication/mac-binhex40\t\t\thqx\napplication/mac-compactpro\t\t\tcpt\napplication/mads+xml\t\t\t\tmads\napplication/marc\t\t\t\tmrc\napplication/marcxml+xml\t\t\t\tmrcx\napplication/mathematica\t\t\t\tma nb mb\napplication/mathml+xml\t\t\t\tmathml\napplication/mbox\t\t\t\tmbox\napplication/mediaservercontrol+xml\t\tmscml\napplication/metalink+xml\t\t\tmetalink\napplication/metalink4+xml\t\t\tmeta4\napplication/mets+xml\t\t\t\tmets\napplication/mods+xml\t\t\t\tmods\napplication/mp21\t\t\t\tm21 mp21\napplication/mp4\t\t\t\t\tmp4s\napplication/msword\t\t\t\tdoc dot\napplication/mxf\t\t\t\t\tmxf\napplication/octet-stream\tbin dms lrf mar so dist distz pkg bpk dump elc deploy\napplication/oda\t\t\t\t\toda\napplication/oebps-package+xml\t\t\topf\napplication/ogg\t\t\t\t\togx\napplication/omdoc+xml\t\t\t\tomdoc\napplication/onenote\t\t\t\tonetoc onetoc2 onetmp onepkg\napplication/oxps\t\t\t\toxps\napplication/patch-ops-error+xml\t\t\txer\napplication/pdf\t\t\t\t\tpdf\napplication/pgp-encrypted\t\t\tpgp\napplication/pgp-signature\t\t\tasc sig\napplication/pics-rules\t\t\t\tprf\napplication/pkcs10\t\t\t\tp10\napplication/pkcs7-mime\t\t\t\tp7m p7c\napplication/pkcs7-signature\t\t\tp7s\napplication/pkcs8\t\t\t\tp8\napplication/pkix-attr-cert\t\t\tac\napplication/pkix-cert\t\t\t\tcer\napplication/pkix-crl\t\t\t\tcrl\napplication/pkix-pkipath\t\t\tpkipath\napplication/pkixcmp\t\t\t\tpki\napplication/pls+xml\t\t\t\tpls\napplication/postscript\t\t\t\tai eps ps\napplication/prs.cww\t\t\t\tcww\napplication/pskc+xml\t\t\t\tpskcxml\napplication/rdf+xml\t\t\t\trdf\napplication/reginfo+xml\t\t\t\trif\napplication/relax-ng-compact-syntax\t\trnc\napplication/resource-lists+xml\t\t\trl\napplication/resource-lists-diff+xml\t\trld\napplication/rls-services+xml\t\t\trs\napplication/rpki-ghostbusters\t\t\tgbr\napplication/rpki-manifest\t\t\tmft\napplication/rpki-roa\t\t\t\troa\napplication/rsd+xml\t\t\t\trsd\napplication/rss+xml\t\t\t\trss\napplication/rtf\t\t\t\t\trtf\napplication/sbml+xml\t\t\t\tsbml\napplication/scvp-cv-request\t\t\tscq\napplication/scvp-cv-response\t\t\tscs\napplication/scvp-vp-request\t\t\tspq\napplication/scvp-vp-response\t\t\tspp\napplication/sdp\t\t\t\t\tsdp\napplication/set-payment-initiation\t\tsetpay\napplication/set-registration-initiation\t\tsetreg\napplication/shf+xml\t\t\t\tshf\napplication/smil+xml\t\t\t\tsmi smil\napplication/sparql-query\t\t\trq\napplication/sparql-results+xml\t\t\tsrx\napplication/srgs\t\t\t\tgram\napplication/srgs+xml\t\t\t\tgrxml\napplication/sru+xml\t\t\t\tsru\napplication/ssdl+xml\t\t\t\tssdl\napplication/ssml+xml\t\t\t\tssml\napplication/tei+xml\t\t\t\ttei teicorpus\napplication/thraud+xml\t\t\t\ttfi\napplication/timestamped-data\t\t\ttsd\napplication/vnd.3gpp.pic-bw-large\t\tplb\napplication/vnd.3gpp.pic-bw-small\t\tpsb\napplication/vnd.3gpp.pic-bw-var\t\t\tpvb\napplication/vnd.3gpp2.tcap\t\t\ttcap\napplication/vnd.3m.post-it-notes\t\tpwn\napplication/vnd.accpac.simply.aso\t\taso\napplication/vnd.accpac.simply.imp\t\timp\napplication/vnd.acucobol\t\t\tacu\napplication/vnd.acucorp\t\t\t\tatc acutc\napplication/vnd.adobe.air-application-installer-package+zip\tair\napplication/vnd.adobe.formscentral.fcdt\t\tfcdt\napplication/vnd.adobe.fxp\t\t\tfxp fxpl\napplication/vnd.adobe.xdp+xml\t\t\txdp\napplication/vnd.adobe.xfdf\t\t\txfdf\napplication/vnd.ahead.space\t\t\tahead\napplication/vnd.airzip.filesecure.azf\t\tazf\napplication/vnd.airzip.filesecure.azs\t\tazs\napplication/vnd.amazon.ebook\t\t\tazw\napplication/vnd.americandynamics.acc\t\tacc\napplication/vnd.amiga.ami\t\t\tami\napplication/vnd.android.package-archive\t\tapk\napplication/vnd.anser-web-certificate-issue-initiation\tcii\napplication/vnd.anser-web-funds-transfer-initiation\tfti\napplication/vnd.antix.game-component\t\tatx\napplication/vnd.apple.installer+xml\t\tmpkg\napplication/vnd.apple.mpegurl\t\t\tm3u8\napplication/vnd.aristanetworks.swi\t\tswi\napplication/vnd.astraea-software.iota\t\tiota\napplication/vnd.audiograph\t\t\taep\napplication/vnd.blueice.multipass\t\tmpm\napplication/vnd.bmi\t\t\t\tbmi\napplication/vnd.businessobjects\t\t\trep\napplication/vnd.chemdraw+xml\t\t\tcdxml\napplication/vnd.chipnuts.karaoke-mmd\t\tmmd\napplication/vnd.cinderella\t\t\tcdy\napplication/vnd.claymore\t\t\tcla\napplication/vnd.cloanto.rp9\t\t\trp9\napplication/vnd.clonk.c4group\t\t\tc4g c4d c4f c4p c4u\napplication/vnd.cluetrust.cartomobile-config\t\tc11amc\napplication/vnd.cluetrust.cartomobile-config-pkg\tc11amz\napplication/vnd.commonspace\t\t\tcsp\napplication/vnd.contact.cmsg\t\t\tcdbcmsg\napplication/vnd.cosmocaller\t\t\tcmc\napplication/vnd.crick.clicker\t\t\tclkx\napplication/vnd.crick.clicker.keyboard\t\tclkk\napplication/vnd.crick.clicker.palette\t\tclkp\napplication/vnd.crick.clicker.template\t\tclkt\napplication/vnd.crick.clicker.wordbank\t\tclkw\napplication/vnd.criticaltools.wbs+xml\t\twbs\napplication/vnd.ctc-posml\t\t\tpml\napplication/vnd.cups-ppd\t\t\tppd\napplication/vnd.curl.car\t\t\tcar\napplication/vnd.curl.pcurl\t\t\tpcurl\napplication/vnd.dart\t\t\t\tdart\napplication/vnd.data-vision.rdz\t\t\trdz\napplication/vnd.dece.data\t\t\tuvf uvvf uvd uvvd\napplication/vnd.dece.ttml+xml\t\t\tuvt uvvt\napplication/vnd.dece.unspecified\t\tuvx uvvx\napplication/vnd.dece.zip\t\t\tuvz uvvz\napplication/vnd.denovo.fcselayout-link\t\tfe_launch\napplication/vnd.dna\t\t\t\tdna\napplication/vnd.dolby.mlp\t\t\tmlp\napplication/vnd.dpgraph\t\t\t\tdpg\napplication/vnd.dreamfactory\t\t\tdfac\napplication/vnd.ds-keypoint\t\t\tkpxx\napplication/vnd.dvb.ait\t\t\t\tait\napplication/vnd.dvb.service\t\t\tsvc\napplication/vnd.dynageo\t\t\t\tgeo\napplication/vnd.ecowin.chart\t\t\tmag\napplication/vnd.enliven\t\t\t\tnml\napplication/vnd.epson.esf\t\t\tesf\napplication/vnd.epson.msf\t\t\tmsf\napplication/vnd.epson.quickanime\t\tqam\napplication/vnd.epson.salt\t\t\tslt\napplication/vnd.epson.ssf\t\t\tssf\napplication/vnd.eszigno3+xml\t\t\tes3 et3\napplication/vnd.ezpix-album\t\t\tez2\napplication/vnd.ezpix-package\t\t\tez3\napplication/vnd.fdf\t\t\t\tfdf\napplication/vnd.fdsn.mseed\t\t\tmseed\napplication/vnd.fdsn.seed\t\t\tseed dataless\napplication/vnd.flographit\t\t\tgph\napplication/vnd.fluxtime.clip\t\t\tftc\napplication/vnd.framemaker\t\t\tfm frame maker book\napplication/vnd.frogans.fnc\t\t\tfnc\napplication/vnd.frogans.ltf\t\t\tltf\napplication/vnd.fsc.weblaunch\t\t\tfsc\napplication/vnd.fujitsu.oasys\t\t\toas\napplication/vnd.fujitsu.oasys2\t\t\toa2\napplication/vnd.fujitsu.oasys3\t\t\toa3\napplication/vnd.fujitsu.oasysgp\t\t\tfg5\napplication/vnd.fujitsu.oasysprs\t\tbh2\napplication/vnd.fujixerox.ddd\t\t\tddd\napplication/vnd.fujixerox.docuworks\t\txdw\napplication/vnd.fujixerox.docuworks.binder\txbd\napplication/vnd.fuzzysheet\t\t\tfzs\napplication/vnd.genomatix.tuxedo\t\ttxd\napplication/vnd.geogebra.file\t\t\tggb\napplication/vnd.geogebra.tool\t\t\tggt\napplication/vnd.geometry-explorer\t\tgex gre\napplication/vnd.geonext\t\t\t\tgxt\napplication/vnd.geoplan\t\t\t\tg2w\napplication/vnd.geospace\t\t\tg3w\napplication/vnd.gmx\t\t\t\tgmx\napplication/vnd.google-earth.kml+xml\t\tkml\napplication/vnd.google-earth.kmz\t\tkmz\napplication/vnd.grafeq\t\t\t\tgqf gqs\napplication/vnd.groove-account\t\t\tgac\napplication/vnd.groove-help\t\t\tghf\napplication/vnd.groove-identity-message\t\tgim\napplication/vnd.groove-injector\t\t\tgrv\napplication/vnd.groove-tool-message\t\tgtm\napplication/vnd.groove-tool-template\t\ttpl\napplication/vnd.groove-vcard\t\t\tvcg\napplication/vnd.hal+xml\t\t\t\thal\napplication/vnd.handheld-entertainment+xml\tzmm\napplication/vnd.hbci\t\t\t\thbci\napplication/vnd.hhe.lesson-player\t\tles\napplication/vnd.hp-hpgl\t\t\t\thpgl\napplication/vnd.hp-hpid\t\t\t\thpid\napplication/vnd.hp-hps\t\t\t\thps\napplication/vnd.hp-jlyt\t\t\t\tjlt\napplication/vnd.hp-pcl\t\t\t\tpcl\napplication/vnd.hp-pclxl\t\t\tpclxl\napplication/vnd.hydrostatix.sof-data\t\tsfd-hdstx\napplication/vnd.ibm.minipay\t\t\tmpy\napplication/vnd.ibm.modcap\t\t\tafp listafp list3820\napplication/vnd.ibm.rights-management\t\tirm\napplication/vnd.ibm.secure-container\t\tsc\napplication/vnd.iccprofile\t\t\ticc icm\napplication/vnd.igloader\t\t\tigl\napplication/vnd.immervision-ivp\t\t\tivp\napplication/vnd.immervision-ivu\t\t\tivu\napplication/vnd.insors.igm\t\t\tigm\napplication/vnd.intercon.formnet\t\txpw xpx\napplication/vnd.intergeo\t\t\ti2g\napplication/vnd.intu.qbo\t\t\tqbo\napplication/vnd.intu.qfx\t\t\tqfx\napplication/vnd.ipunplugged.rcprofile\t\trcprofile\napplication/vnd.irepository.package+xml\t\tirp\napplication/vnd.is-xpr\t\t\t\txpr\napplication/vnd.isac.fcs\t\t\tfcs\napplication/vnd.jam\t\t\t\tjam\napplication/vnd.jcp.javame.midlet-rms\t\trms\napplication/vnd.jisp\t\t\t\tjisp\napplication/vnd.joost.joda-archive\t\tjoda\napplication/vnd.kahootz\t\t\t\tktz ktr\napplication/vnd.kde.karbon\t\t\tkarbon\napplication/vnd.kde.kchart\t\t\tchrt\napplication/vnd.kde.kformula\t\t\tkfo\napplication/vnd.kde.kivio\t\t\tflw\napplication/vnd.kde.kontour\t\t\tkon\napplication/vnd.kde.kpresenter\t\t\tkpr kpt\napplication/vnd.kde.kspread\t\t\tksp\napplication/vnd.kde.kword\t\t\tkwd kwt\napplication/vnd.kenameaapp\t\t\thtke\napplication/vnd.kidspiration\t\t\tkia\napplication/vnd.kinar\t\t\t\tkne knp\napplication/vnd.koan\t\t\t\tskp skd skt skm\napplication/vnd.kodak-descriptor\t\tsse\napplication/vnd.las.las+xml\t\t\tlasxml\napplication/vnd.llamagraphics.life-balance.desktop\tlbd\napplication/vnd.llamagraphics.life-balance.exchange+xml\tlbe\napplication/vnd.lotus-1-2-3\t\t\t123\napplication/vnd.lotus-approach\t\t\tapr\napplication/vnd.lotus-freelance\t\t\tpre\napplication/vnd.lotus-notes\t\t\tnsf\napplication/vnd.lotus-organizer\t\t\torg\napplication/vnd.lotus-screencam\t\t\tscm\napplication/vnd.lotus-wordpro\t\t\tlwp\napplication/vnd.macports.portpkg\t\tportpkg\napplication/vnd.mcd\t\t\t\tmcd\napplication/vnd.medcalcdata\t\t\tmc1\napplication/vnd.mediastation.cdkey\t\tcdkey\napplication/vnd.mfer\t\t\t\tmwf\napplication/vnd.mfmp\t\t\t\tmfm\napplication/vnd.micrografx.flo\t\t\tflo\napplication/vnd.micrografx.igx\t\t\tigx\napplication/vnd.mif\t\t\t\tmif\napplication/vnd.mobius.daf\t\t\tdaf\napplication/vnd.mobius.dis\t\t\tdis\napplication/vnd.mobius.mbk\t\t\tmbk\napplication/vnd.mobius.mqy\t\t\tmqy\napplication/vnd.mobius.msl\t\t\tmsl\napplication/vnd.mobius.plc\t\t\tplc\napplication/vnd.mobius.txf\t\t\ttxf\napplication/vnd.mophun.application\t\tmpn\napplication/vnd.mophun.certificate\t\tmpc\napplication/vnd.mozilla.xul+xml\t\t\txul\napplication/vnd.ms-artgalry\t\t\tcil\napplication/vnd.ms-cab-compressed\t\tcab\napplication/vnd.ms-excel\t\t\txls xlm xla xlc xlt xlw\napplication/vnd.ms-excel.addin.macroenabled.12\t\txlam\napplication/vnd.ms-excel.sheet.binary.macroenabled.12\txlsb\napplication/vnd.ms-excel.sheet.macroenabled.12\t\txlsm\napplication/vnd.ms-excel.template.macroenabled.12\txltm\napplication/vnd.ms-fontobject\t\t\teot\napplication/vnd.ms-htmlhelp\t\t\tchm\napplication/vnd.ms-ims\t\t\t\tims\napplication/vnd.ms-lrm\t\t\t\tlrm\napplication/vnd.ms-officetheme\t\t\tthmx\napplication/vnd.ms-pki.seccat\t\t\tcat\napplication/vnd.ms-pki.stl\t\t\tstl\napplication/vnd.ms-powerpoint\t\t\tppt pps pot\napplication/vnd.ms-powerpoint.addin.macroenabled.12\t\tppam\napplication/vnd.ms-powerpoint.presentation.macroenabled.12\tpptm\napplication/vnd.ms-powerpoint.slide.macroenabled.12\t\tsldm\napplication/vnd.ms-powerpoint.slideshow.macroenabled.12\t\tppsm\napplication/vnd.ms-powerpoint.template.macroenabled.12\t\tpotm\napplication/vnd.ms-project\t\t\tmpp mpt\napplication/vnd.ms-word.document.macroenabled.12\tdocm\napplication/vnd.ms-word.template.macroenabled.12\tdotm\napplication/vnd.ms-works\t\t\twps wks wcm wdb\napplication/vnd.ms-wpl\t\t\t\twpl\napplication/vnd.ms-xpsdocument\t\t\txps\napplication/vnd.mseq\t\t\t\tmseq\napplication/vnd.musician\t\t\tmus\napplication/vnd.muvee.style\t\t\tmsty\napplication/vnd.mynfc\t\t\t\ttaglet\napplication/vnd.neurolanguage.nlu\t\tnlu\napplication/vnd.nitf\t\t\t\tntf nitf\napplication/vnd.noblenet-directory\t\tnnd\napplication/vnd.noblenet-sealer\t\t\tnns\napplication/vnd.noblenet-web\t\t\tnnw\napplication/vnd.nokia.n-gage.data\t\tngdat\napplication/vnd.nokia.n-gage.symbian.install\tn-gage\napplication/vnd.nokia.radio-preset\t\trpst\napplication/vnd.nokia.radio-presets\t\trpss\napplication/vnd.novadigm.edm\t\t\tedm\napplication/vnd.novadigm.edx\t\t\tedx\napplication/vnd.novadigm.ext\t\t\text\napplication/vnd.oasis.opendocument.chart\t\todc\napplication/vnd.oasis.opendocument.chart-template\totc\napplication/vnd.oasis.opendocument.database\t\todb\napplication/vnd.oasis.opendocument.formula\t\todf\napplication/vnd.oasis.opendocument.formula-template\todft\napplication/vnd.oasis.opendocument.graphics\t\todg\napplication/vnd.oasis.opendocument.graphics-template\totg\napplication/vnd.oasis.opendocument.image\t\todi\napplication/vnd.oasis.opendocument.image-template\toti\napplication/vnd.oasis.opendocument.presentation\t\todp\napplication/vnd.oasis.opendocument.presentation-template\totp\napplication/vnd.oasis.opendocument.spreadsheet\t\tods\napplication/vnd.oasis.opendocument.spreadsheet-template\tots\napplication/vnd.oasis.opendocument.text\t\t\todt\napplication/vnd.oasis.opendocument.text-master\t\todm\napplication/vnd.oasis.opendocument.text-template\tott\napplication/vnd.oasis.opendocument.text-web\t\toth\napplication/vnd.olpc-sugar\t\t\txo\napplication/vnd.oma.dd2+xml\t\t\tdd2\napplication/vnd.openofficeorg.extension\t\toxt\napplication/vnd.openxmlformats-officedocument.presentationml.presentation\tpptx\napplication/vnd.openxmlformats-officedocument.presentationml.slide\tsldx\napplication/vnd.openxmlformats-officedocument.presentationml.slideshow\tppsx\napplication/vnd.openxmlformats-officedocument.presentationml.template\tpotx\napplication/vnd.openxmlformats-officedocument.spreadsheetml.sheet\txlsx\napplication/vnd.openxmlformats-officedocument.spreadsheetml.template\txltx\napplication/vnd.openxmlformats-officedocument.wordprocessingml.document\tdocx\napplication/vnd.openxmlformats-officedocument.wordprocessingml.template\tdotx\napplication/vnd.osgeo.mapguide.package\t\tmgp\napplication/vnd.osgi.dp\t\t\t\tdp\napplication/vnd.osgi.subsystem\t\t\tesa\napplication/vnd.palm\t\t\t\tpdb pqa oprc\napplication/vnd.pawaafile\t\t\tpaw\napplication/vnd.pg.format\t\t\tstr\napplication/vnd.pg.osasli\t\t\tei6\napplication/vnd.picsel\t\t\t\tefif\napplication/vnd.pmi.widget\t\t\twg\napplication/vnd.pocketlearn\t\t\tplf\napplication/vnd.powerbuilder6\t\t\tpbd\napplication/vnd.previewsystems.box\t\tbox\napplication/vnd.proteus.magazine\t\tmgz\napplication/vnd.publishare-delta-tree\t\tqps\napplication/vnd.pvi.ptid1\t\t\tptid\napplication/vnd.quark.quarkxpress\t\tqxd qxt qwd qwt qxl qxb\napplication/vnd.realvnc.bed\t\t\tbed\napplication/vnd.recordare.musicxml\t\tmxl\napplication/vnd.recordare.musicxml+xml\t\tmusicxml\napplication/vnd.rig.cryptonote\t\t\tcryptonote\napplication/vnd.rim.cod\t\t\t\tcod\napplication/vnd.rn-realmedia\t\t\trm\napplication/vnd.rn-realmedia-vbr\t\trmvb\napplication/vnd.route66.link66+xml\t\tlink66\napplication/vnd.sailingtracker.track\t\tst\napplication/vnd.seemail\t\t\t\tsee\napplication/vnd.sema\t\t\t\tsema\napplication/vnd.semd\t\t\t\tsemd\napplication/vnd.semf\t\t\t\tsemf\napplication/vnd.shana.informed.formdata\t\tifm\napplication/vnd.shana.informed.formtemplate\titp\napplication/vnd.shana.informed.interchange\tiif\napplication/vnd.shana.informed.package\t\tipk\napplication/vnd.simtech-mindmapper\t\ttwd twds\napplication/vnd.smaf\t\t\t\tmmf\napplication/vnd.smart.teacher\t\t\tteacher\napplication/vnd.solent.sdkm+xml\t\t\tsdkm sdkd\napplication/vnd.spotfire.dxp\t\t\tdxp\napplication/vnd.spotfire.sfs\t\t\tsfs\napplication/vnd.stardivision.calc\t\tsdc\napplication/vnd.stardivision.draw\t\tsda\napplication/vnd.stardivision.impress\t\tsdd\napplication/vnd.stardivision.math\t\tsmf\napplication/vnd.stardivision.writer\t\tsdw vor\napplication/vnd.stardivision.writer-global\tsgl\napplication/vnd.stepmania.package\t\tsmzip\napplication/vnd.stepmania.stepchart\t\tsm\napplication/vnd.sun.xml.calc\t\t\tsxc\napplication/vnd.sun.xml.calc.template\t\tstc\napplication/vnd.sun.xml.draw\t\t\tsxd\napplication/vnd.sun.xml.draw.template\t\tstd\napplication/vnd.sun.xml.impress\t\t\tsxi\napplication/vnd.sun.xml.impress.template\tsti\napplication/vnd.sun.xml.math\t\t\tsxm\napplication/vnd.sun.xml.writer\t\t\tsxw\napplication/vnd.sun.xml.writer.global\t\tsxg\napplication/vnd.sun.xml.writer.template\t\tstw\napplication/vnd.sus-calendar\t\t\tsus susp\napplication/vnd.svd\t\t\t\tsvd\napplication/vnd.symbian.install\t\t\tsis sisx\napplication/vnd.syncml+xml\t\t\txsm\napplication/vnd.syncml.dm+wbxml\t\t\tbdm\napplication/vnd.syncml.dm+xml\t\t\txdm\napplication/vnd.tao.intent-module-archive\ttao\napplication/vnd.tcpdump.pcap\t\t\tpcap cap dmp\napplication/vnd.tmobile-livetv\t\t\ttmo\napplication/vnd.trid.tpt\t\t\ttpt\napplication/vnd.triscape.mxs\t\t\tmxs\napplication/vnd.trueapp\t\t\t\ttra\napplication/vnd.ufdl\t\t\t\tufd ufdl\napplication/vnd.uiq.theme\t\t\tutz\napplication/vnd.umajin\t\t\t\tumj\napplication/vnd.unity\t\t\t\tunityweb\napplication/vnd.uoml+xml\t\t\tuoml\napplication/vnd.vcx\t\t\t\tvcx\napplication/vnd.visio\t\t\t\tvsd vst vss vsw\napplication/vnd.visionary\t\t\tvis\napplication/vnd.vsf\t\t\t\tvsf\napplication/vnd.wap.wbxml\t\t\twbxml\napplication/vnd.wap.wmlc\t\t\twmlc\napplication/vnd.wap.wmlscriptc\t\t\twmlsc\napplication/vnd.webturbo\t\t\twtb\napplication/vnd.wolfram.player\t\t\tnbp\napplication/vnd.wordperfect\t\t\twpd\napplication/vnd.wqd\t\t\t\twqd\napplication/vnd.wt.stf\t\t\t\tstf\napplication/vnd.xara\t\t\t\txar\napplication/vnd.xfdl\t\t\t\txfdl\napplication/vnd.yamaha.hv-dic\t\t\thvd\napplication/vnd.yamaha.hv-script\t\thvs\napplication/vnd.yamaha.hv-voice\t\t\thvp\napplication/vnd.yamaha.openscoreformat\t\t\tosf\napplication/vnd.yamaha.openscoreformat.osfpvg+xml\tosfpvg\napplication/vnd.yamaha.smaf-audio\t\tsaf\napplication/vnd.yamaha.smaf-phrase\t\tspf\napplication/vnd.yellowriver-custom-menu\t\tcmp\napplication/vnd.zul\t\t\t\tzir zirz\napplication/vnd.zzazz.deck+xml\t\t\tzaz\napplication/voicexml+xml\t\t\tvxml\napplication/wasm\t\t\t\twasm\napplication/widget\t\t\t\twgt\napplication/winhlp\t\t\t\thlp\napplication/wsdl+xml\t\t\t\twsdl\napplication/wspolicy+xml\t\t\twspolicy\napplication/x-7z-compressed\t\t\t7z\napplication/x-abiword\t\t\t\tabw\napplication/x-ace-compressed\t\t\tace\napplication/x-apple-diskimage\t\t\tdmg\napplication/x-authorware-bin\t\t\taab x32 u32 vox\napplication/x-authorware-map\t\t\taam\napplication/x-authorware-seg\t\t\taas\napplication/x-bcpio\t\t\t\tbcpio\napplication/x-bittorrent\t\t\ttorrent\napplication/x-blorb\t\t\t\tblb blorb\napplication/x-bzip\t\t\t\tbz\napplication/x-bzip2\t\t\t\tbz2 boz\napplication/x-cbr\t\t\t\tcbr cba cbt cbz cb7\napplication/x-cdlink\t\t\t\tvcd\napplication/x-cfs-compressed\t\t\tcfs\napplication/x-chat\t\t\t\tchat\napplication/x-chess-pgn\t\t\t\tpgn\napplication/x-conference\t\t\tnsc\napplication/x-cpio\t\t\t\tcpio\napplication/x-csh\t\t\t\tcsh\napplication/x-debian-package\t\t\tdeb udeb\napplication/x-dgc-compressed\t\t\tdgc\napplication/x-director\t\t\tdir dcr dxr cst cct cxt w3d fgd swa\napplication/x-doom\t\t\t\twad\napplication/x-dtbncx+xml\t\t\tncx\napplication/x-dtbook+xml\t\t\tdtb\napplication/x-dtbresource+xml\t\t\tres\napplication/x-dvi\t\t\t\tdvi\napplication/x-envoy\t\t\t\tevy\napplication/x-eva\t\t\t\teva\napplication/x-font-bdf\t\t\t\tbdf\napplication/x-font-ghostscript\t\t\tgsf\napplication/x-font-linux-psf\t\t\tpsf\napplication/x-font-pcf\t\t\t\tpcf\napplication/x-font-snf\t\t\t\tsnf\napplication/x-font-type1\t\t\tpfa pfb pfm afm\napplication/x-freearc\t\t\t\tarc\napplication/x-futuresplash\t\t\tspl\napplication/x-gca-compressed\t\t\tgca\napplication/x-glulx\t\t\t\tulx\napplication/x-gnumeric\t\t\t\tgnumeric\napplication/x-gramps-xml\t\t\tgramps\napplication/x-gtar\t\t\t\tgtar\napplication/x-hdf\t\t\t\thdf\napplication/x-install-instructions\t\tinstall\napplication/x-iso9660-image\t\t\tiso\napplication/x-java-jnlp-file\t\t\tjnlp\napplication/x-latex\t\t\t\tlatex\napplication/x-lzh-compressed\t\t\tlzh lha\napplication/x-mie\t\t\t\tmie\napplication/x-mobipocket-ebook\t\t\tprc mobi\napplication/x-ms-application\t\t\tapplication\napplication/x-ms-shortcut\t\t\tlnk\napplication/x-ms-wmd\t\t\t\twmd\napplication/x-ms-wmz\t\t\t\twmz\napplication/x-ms-xbap\t\t\t\txbap\napplication/x-msaccess\t\t\t\tmdb\napplication/x-msbinder\t\t\t\tobd\napplication/x-mscardfile\t\t\tcrd\napplication/x-msclip\t\t\t\tclp\napplication/x-msdownload\t\t\texe dll com bat msi\napplication/x-msmediaview\t\t\tmvb m13 m14\napplication/x-msmetafile\t\t\twmf wmz emf emz\napplication/x-msmoney\t\t\t\tmny\napplication/x-mspublisher\t\t\tpub\napplication/x-msschedule\t\t\tscd\napplication/x-msterminal\t\t\ttrm\napplication/x-mswrite\t\t\t\twri\napplication/x-netcdf\t\t\t\tnc cdf\napplication/x-nzb\t\t\t\tnzb\napplication/x-pkcs12\t\t\t\tp12 pfx\napplication/x-pkcs7-certificates\t\tp7b spc\napplication/x-pkcs7-certreqresp\t\t\tp7r\napplication/x-rar-compressed\t\t\trar\napplication/x-research-info-systems\t\tris\napplication/x-sh\t\t\t\tsh\napplication/x-shar\t\t\t\tshar\napplication/x-shockwave-flash\t\t\tswf\napplication/x-silverlight-app\t\t\txap\napplication/x-sql\t\t\t\tsql\napplication/x-stuffit\t\t\t\tsit\napplication/x-stuffitx\t\t\t\tsitx\napplication/x-subrip\t\t\t\tsrt\napplication/x-sv4cpio\t\t\t\tsv4cpio\napplication/x-sv4crc\t\t\t\tsv4crc\napplication/x-t3vm-image\t\t\tt3\napplication/x-tads\t\t\t\tgam\napplication/x-tar\t\t\t\ttar\napplication/x-tcl\t\t\t\ttcl\napplication/x-tex\t\t\t\ttex\napplication/x-tex-tfm\t\t\t\ttfm\napplication/x-texinfo\t\t\t\ttexinfo texi\napplication/x-tgif\t\t\t\tobj\napplication/x-ustar\t\t\t\tustar\napplication/x-wais-source\t\t\tsrc\napplication/x-x509-ca-cert\t\t\tder crt\napplication/x-xfig\t\t\t\tfig\napplication/x-xliff+xml\t\t\t\txlf\napplication/x-xpinstall\t\t\t\txpi\napplication/x-xz\t\t\t\txz\napplication/x-zmachine\t\t\t\tz1 z2 z3 z4 z5 z6 z7 z8\napplication/xaml+xml\t\t\t\txaml\napplication/xcap-diff+xml\t\t\txdf\napplication/xenc+xml\t\t\t\txenc\napplication/xhtml+xml\t\t\t\txhtml xht\napplication/xml\t\t\t\t\txml xsl\napplication/xml-dtd\t\t\t\tdtd\napplication/xop+xml\t\t\t\txop\napplication/xproc+xml\t\t\t\txpl\napplication/xslt+xml\t\t\t\txslt\napplication/xspf+xml\t\t\t\txspf\napplication/xv+xml\t\t\t\tmxml xhvml xvml xvm\napplication/yang\t\t\t\tyang\napplication/yin+xml\t\t\t\tyin\napplication/zip\t\t\t\t\tzip\naudio/adpcm\t\t\t\t\tadp\naudio/basic\t\t\t\t\tau snd\naudio/midi\t\t\t\t\tmid midi kar rmi\naudio/mp4\t\t\t\t\tm4a mp4a\naudio/mpeg\t\t\t\t\tmpga mp2 mp2a mp3 m2a m3a\naudio/ogg\t\t\t\t\toga ogg spx\naudio/s3m\t\t\t\t\ts3m\naudio/silk\t\t\t\t\tsil\naudio/vnd.dece.audio\t\t\t\tuva uvva\naudio/vnd.digital-winds\t\t\t\teol\naudio/vnd.dra\t\t\t\t\tdra\naudio/vnd.dts\t\t\t\t\tdts\naudio/vnd.dts.hd\t\t\t\tdtshd\naudio/vnd.lucent.voice\t\t\t\tlvp\naudio/vnd.ms-playready.media.pya\t\tpya\naudio/vnd.nuera.ecelp4800\t\t\tecelp4800\naudio/vnd.nuera.ecelp7470\t\t\tecelp7470\naudio/vnd.nuera.ecelp9600\t\t\tecelp9600\naudio/vnd.rip\t\t\t\t\trip\naudio/webm\t\t\t\t\tweba\naudio/x-aac\t\t\t\t\taac\naudio/x-aiff\t\t\t\t\taif aiff aifc\naudio/x-caf\t\t\t\t\tcaf\naudio/x-flac\t\t\t\t\tflac\naudio/x-matroska\t\t\t\tmka\naudio/x-mpegurl\t\t\t\t\tm3u\naudio/x-ms-wax\t\t\t\t\twax\naudio/x-ms-wma\t\t\t\t\twma\naudio/x-pn-realaudio\t\t\t\tram ra\naudio/x-pn-realaudio-plugin\t\t\trmp\naudio/x-wav\t\t\t\t\twav\naudio/xm\t\t\t\t\txm\nchemical/x-cdx\t\t\t\t\tcdx\nchemical/x-cif\t\t\t\t\tcif\nchemical/x-cmdf\t\t\t\t\tcmdf\nchemical/x-cml\t\t\t\t\tcml\nchemical/x-csml\t\t\t\t\tcsml\nchemical/x-xyz\t\t\t\t\txyz\nfont/collection\t\t\t\t\tttc\nfont/otf\t\t\t\t\totf\nfont/ttf\t\t\t\t\tttf\nfont/woff\t\t\t\t\twoff\nfont/woff2\t\t\t\t\twoff2\nimage/bmp\t\t\t\t\tbmp\nimage/cgm\t\t\t\t\tcgm\nimage/g3fax\t\t\t\t\tg3\nimage/gif\t\t\t\t\tgif\nimage/ief\t\t\t\t\tief\nimage/jpeg\t\t\t\t\tjpeg jpg jpe\nimage/ktx\t\t\t\t\tktx\nimage/png\t\t\t\t\tpng\nimage/prs.btif\t\t\t\t\tbtif\nimage/sgi\t\t\t\t\tsgi\nimage/svg+xml\t\t\t\t\tsvg svgz\nimage/tiff\t\t\t\t\ttiff tif\nimage/vnd.adobe.photoshop\t\t\tpsd\nimage/vnd.dece.graphic\t\t\t\tuvi uvvi uvg uvvg\nimage/vnd.djvu\t\t\t\t\tdjvu djv\nimage/vnd.dvb.subtitle\t\t\t\tsub\nimage/vnd.dwg\t\t\t\t\tdwg\nimage/vnd.dxf\t\t\t\t\tdxf\nimage/vnd.fastbidsheet\t\t\t\tfbs\nimage/vnd.fpx\t\t\t\t\tfpx\nimage/vnd.fst\t\t\t\t\tfst\nimage/vnd.fujixerox.edmics-mmr\t\t\tmmr\nimage/vnd.fujixerox.edmics-rlc\t\t\trlc\nimage/vnd.ms-modi\t\t\t\tmdi\nimage/vnd.ms-photo\t\t\t\twdp\nimage/vnd.net-fpx\t\t\t\tnpx\nimage/vnd.wap.wbmp\t\t\t\twbmp\nimage/vnd.xiff\t\t\t\t\txif\nimage/webp\t\t\t\t\twebp\nimage/x-3ds\t\t\t\t\t3ds\nimage/x-cmu-raster\t\t\t\tras\nimage/x-cmx\t\t\t\t\tcmx\nimage/x-freehand\t\t\t\tfh fhc fh4 fh5 fh7\nimage/x-icon\t\t\t\t\tico\nimage/x-mrsid-image\t\t\t\tsid\nimage/x-pcx\t\t\t\t\tpcx\nimage/x-pict\t\t\t\t\tpic pct\nimage/x-portable-anymap\t\t\t\tpnm\nimage/x-portable-bitmap\t\t\t\tpbm\nimage/x-portable-graymap\t\t\tpgm\nimage/x-portable-pixmap\t\t\t\tppm\nimage/x-rgb\t\t\t\t\trgb\nimage/x-tga\t\t\t\t\ttga\nimage/x-xbitmap\t\t\t\t\txbm\nimage/x-xpixmap\t\t\t\t\txpm\nimage/x-xwindowdump\t\t\t\txwd\nmessage/rfc822\t\t\t\t\teml mime\nmodel/iges\t\t\t\t\tigs iges\nmodel/mesh\t\t\t\t\tmsh mesh silo\nmodel/vnd.collada+xml\t\t\t\tdae\nmodel/vnd.dwf\t\t\t\t\tdwf\nmodel/vnd.gdl\t\t\t\t\tgdl\nmodel/vnd.gtw\t\t\t\t\tgtw\nmodel/vnd.mts\t\t\t\t\tmts\nmodel/vnd.vtu\t\t\t\t\tvtu\nmodel/vrml\t\t\t\t\twrl vrml\nmodel/x3d+binary\t\t\t\tx3db x3dbz\nmodel/x3d+vrml\t\t\t\t\tx3dv x3dvz\nmodel/x3d+xml\t\t\t\t\tx3d x3dz\ntext/cache-manifest\t\t\t\tappcache\ntext/calendar\t\t\t\t\tics ifb\ntext/css\t\t\t\t\tcss\ntext/csv\t\t\t\t\tcsv\ntext/html\t\t\t\t\thtml htm\ntext/n3\t\t\t\t\t\tn3\ntext/plain\t\t\t\t\ttxt text conf def list log in\ntext/prs.lines.tag\t\t\t\tdsc\ntext/richtext\t\t\t\t\trtx\ntext/sgml\t\t\t\t\tsgml sgm\ntext/tab-separated-values\t\t\ttsv\ntext/troff\t\t\t\t\tt tr roff man me ms\ntext/turtle\t\t\t\t\tttl\ntext/uri-list\t\t\t\t\turi uris urls\ntext/vcard\t\t\t\t\tvcard\ntext/vnd.curl\t\t\t\t\tcurl\ntext/vnd.curl.dcurl\t\t\t\tdcurl\ntext/vnd.curl.mcurl\t\t\t\tmcurl\ntext/vnd.curl.scurl\t\t\t\tscurl\ntext/vnd.dvb.subtitle\t\t\t\tsub\ntext/vnd.fly\t\t\t\t\tfly\ntext/vnd.fmi.flexstor\t\t\t\tflx\ntext/vnd.graphviz\t\t\t\tgv\ntext/vnd.in3d.3dml\t\t\t\t3dml\ntext/vnd.in3d.spot\t\t\t\tspot\ntext/vnd.sun.j2me.app-descriptor\t\tjad\ntext/vnd.wap.wml\t\t\t\twml\ntext/vnd.wap.wmlscript\t\t\t\twmls\ntext/x-asm\t\t\t\t\ts asm\ntext/x-c\t\t\t\t\tc cc cxx cpp h hh dic\ntext/x-fortran\t\t\t\t\tf for f77 f90\ntext/x-java-source\t\t\t\tjava\ntext/x-nfo\t\t\t\t\tnfo\ntext/x-opml\t\t\t\t\topml\ntext/x-pascal\t\t\t\t\tp pas\ntext/x-setext\t\t\t\t\tetx\ntext/x-sfv\t\t\t\t\tsfv\ntext/x-uuencode\t\t\t\t\tuu\ntext/x-vcalendar\t\t\t\tvcs\ntext/x-vcard\t\t\t\t\tvcf\nvideo/3gpp\t\t\t\t\t3gp\nvideo/3gpp2\t\t\t\t\t3g2\nvideo/h261\t\t\t\t\th261\nvideo/h263\t\t\t\t\th263\nvideo/h264\t\t\t\t\th264\nvideo/jpeg\t\t\t\t\tjpgv\nvideo/jpm\t\t\t\t\tjpm jpgm\nvideo/mj2\t\t\t\t\tmj2 mjp2\nvideo/mp4\t\t\t\t\tmp4 mp4v mpg4\nvideo/mpeg\t\t\t\t\tmpeg mpg mpe m1v m2v\nvideo/ogg\t\t\t\t\togv\nvideo/quicktime\t\t\t\t\tqt mov\nvideo/vnd.dece.hd\t\t\t\tuvh uvvh\nvideo/vnd.dece.mobile\t\t\t\tuvm uvvm\nvideo/vnd.dece.pd\t\t\t\tuvp uvvp\nvideo/vnd.dece.sd\t\t\t\tuvs uvvs\nvideo/vnd.dece.video\t\t\t\tuvv uvvv\nvideo/vnd.dvb.file\t\t\t\tdvb\nvideo/vnd.fvt\t\t\t\t\tfvt\nvideo/vnd.mpegurl\t\t\t\tmxu m4u\nvideo/vnd.ms-playready.media.pyv\t\tpyv\nvideo/vnd.uvvu.mp4\t\t\t\tuvu uvvu\nvideo/vnd.vivo\t\t\t\t\tviv\nvideo/webm\t\t\t\t\twebm\nvideo/x-f4v\t\t\t\t\tf4v\nvideo/x-fli\t\t\t\t\tfli\nvideo/x-flv\t\t\t\t\tflv\nvideo/x-m4v\t\t\t\t\tm4v\nvideo/x-matroska\t\t\t\tmkv mk3d mks\nvideo/x-mng\t\t\t\t\tmng\nvideo/x-ms-asf\t\t\t\t\tasf asx\nvideo/x-ms-vob\t\t\t\t\tvob\nvideo/x-ms-wm\t\t\t\t\twm\nvideo/x-ms-wmv\t\t\t\t\twmv\nvideo/x-ms-wmx\t\t\t\t\twmx\nvideo/x-ms-wvx\t\t\t\t\twvx\nvideo/x-msvideo\t\t\t\t\tavi\nvideo/x-sgi-movie\t\t\t\tmovie\nvideo/x-smv\t\t\t\t\tsmv\nx-conference/x-cooltalk\t\t\t\tice\n";
-
-const map = new Map();
-
-mime_raw.split('\n').forEach((row) => {
-	const match = /(.+?)\t+(.+)/.exec(row);
-	if (!match) return;
-
-	const type = match[1];
-	const extensions = match[2].split(' ');
-
-	extensions.forEach(ext => {
-		map.set(ext, type);
-	});
-});
-
-function lookup$1(file) {
-	const match = /\.([^\.]+)$/.exec(file);
-	return match && map.get(match[1]);
 }
 
 function middleware(opts
@@ -3175,12 +3363,12 @@ function middleware(opts
 			next();
 		},
 
-		fs.existsSync(path.join(build_dir, 'service-worker.js')) && serve({
+		fs$1.existsSync(path$1.join(build_dir, 'service-worker.js')) && serve({
 			pathname: '/service-worker.js',
 			cache_control: 'no-cache, no-store, must-revalidate'
 		}),
 
-		fs.existsSync(path.join(build_dir, 'service-worker.js.map')) && serve({
+		fs$1.existsSync(path$1.join(build_dir, 'service-worker.js.map')) && serve({
 			pathname: '/service-worker.js.map',
 			cache_control: 'no-cache, no-store, must-revalidate'
 		}),
@@ -3236,14 +3424,14 @@ function serve({ prefix, pathname, cache_control }
 
 	const cache = new Map();
 
-	const read =  (file) => (cache.has(file) ? cache : cache.set(file, fs.readFileSync(path.resolve(build_dir, file)))).get(file);
+	const read =  (file) => (cache.has(file) ? cache : cache.set(file, fs$1.readFileSync(path$1.join(build_dir, file)))).get(file);
 
 	return (req, res, next) => {
 		if (filter(req)) {
-			const type = lookup$1(req.path);
+			const type = lite.getType(req.path);
 
 			try {
-				const file = decodeURIComponent(req.path.slice(1));
+				const file = path$1.posix.normalize(decodeURIComponent(req.path));
 				const data = read(file);
 
 				res.setHeader('Content-Type', type);
@@ -3262,14 +3450,14 @@ function serve({ prefix, pathname, cache_control }
 function noop$1(){}
 
 const { PORT, NODE_ENV } = process.env;
-const dev = NODE_ENV === 'development';
+const dev = NODE_ENV === "development";
 
 polka() // You can also use Express
-	.use(
-		compression({ threshold: 0 }),
-		sirv('static', { dev }),
-		middleware()
-	)
-	.listen(PORT, err => {
-		if (err) console.log('error', err);
-	});
+  .use(
+    compression({ threshold: 0 }),
+    sirv("static", { dev }),
+    middleware()
+  )
+  .listen(PORT, err => {
+    if (err) console.log("error", err);
+  });

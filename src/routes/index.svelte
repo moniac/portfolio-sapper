@@ -184,7 +184,7 @@
   </div>
 
   <figure class="waves">
-    <img class="wave1" alt="" src="wave1.png" />
+    <img class="wave1" alt="" src="wave1.svg" />
     <img class="wave2" alt="" src="wave2.svg" />
   </figure>
 

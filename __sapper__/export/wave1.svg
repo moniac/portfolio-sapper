@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1440px" height="545px" viewBox="0 0 1440 545" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 59.1 (86144) - https://sketch.com -->
+    <title>Path 3</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="79.6579509%" y1="47.9798802%" x2="8.67647374%" y2="48.5319442%" id="linearGradient-1">
+            <stop stop-color="#51D4EC" offset="0%"></stop>
+            <stop stop-color="#943892" offset="51.5670159%"></stop>
+            <stop stop-color="#213493" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" opacity="0.403515625">
+        <g id="Desktop-HD-Copy" transform="translate(0.000000, -92.000000)" fill="url(#linearGradient-1)">
+            <g id="Group-5">
+                <g id="waves" transform="translate(716.652279, 533.678823) rotate(-4.000000) translate(-716.652279, -533.678823) translate(-338.347721, 133.678823)">
+                    <path d="M278.314489,35.8500709 C374.503167,-42.4533763 582.253914,81.9524779 1045.7477,63.9905158 C1509.24149,46.0285537 1585.87099,-59.9510024 1914.85644,49.7279774 C2134.18008,122.847297 2155.23852,243.04954 1978.03178,410.334705 L133.913729,457.687103 C166.055117,228.664713 214.188704,88.052369 278.314489,35.8500709 Z" id="Path-3" opacity="0.795145089"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

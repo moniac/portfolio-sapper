@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="90px" height="87px" viewBox="0 0 90 87" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 63.1 (92452) - https://sketch.com -->
+    <title>Polygon</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <filter x="-4.7%" y="-7.5%" width="109.4%" height="104.1%" filterUnits="objectBoundingBox" id="filter-1">
+            <feGaussianBlur stdDeviation="0" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Desktop-HD-Copy" transform="translate(-731.000000, -169.000000)" fill-rule="nonzero" stroke="#FFFFFF" stroke-width="10">
+            <g id="Group-8" transform="translate(735.000000, 176.000000)">
+                <polygon id="Polygon" filter="url(#filter-1)" points="41 0 79.9933172 28.3303032 65.0991953 74.1696968 16.9008047 74.1696968 2.00668283 28.3303032"></polygon>
+            </g>
+        </g>
+    </g>
+</svg>
