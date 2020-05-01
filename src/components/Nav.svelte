@@ -43,18 +43,6 @@
     padding: 1em 0.5em;
     display: block;
   }
-
-  .toggle {
-    float: right;
-  }
-
-  .toggle button {
-    border: none;
-    background: none;
-    height: 100%;
-    font-size: 24px;
-    cursor: pointer;
-  }
 </style>
 
 <nav>
