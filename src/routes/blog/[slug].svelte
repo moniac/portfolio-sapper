@@ -16,6 +16,7 @@
 <script>
   import GradientHeading from "../../components/GradientHeading.svelte";
   export let post;
+  console.log(post);
 </script>
 
 <style>
