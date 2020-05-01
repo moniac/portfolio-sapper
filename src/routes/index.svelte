@@ -11,19 +11,29 @@
     position: relative;
   }
 
+  .wave1,
+  .wave2 {
+    width: 100vw;
+  }
+
+  .waves {
+    opacity: 0.6;
+    position: relative;
+    transform: translateY(1070px);
+  }
+
   .wave1 {
     position: absolute;
-    bottom: -30%;
-    width: 100%;
+    bottom: 0%;
     animation: wave 4s ease infinite alternate;
   }
 
   .wave2 {
     position: absolute;
-    bottom: -20%;
-    width: 100%;
+    bottom: 0%;
     animation: wave 2s ease infinite alternate, hue 5s ease infinite;
     animation-delay: 0.2s;
+    margin-bottom: 5rem;
   }
 
   .intro {
@@ -62,10 +72,6 @@
     filter: blur(8px);
   }
 
-  .waves {
-    opacity: 0.6;
-  }
-
   .logo_container {
     max-height: 52px;
     display: flex;
@@ -75,6 +81,12 @@
     max-height: 52px;
   }
 
+  @media (min-width: 500px) {
+    .waves {
+      transform: translateY(1100px);
+    }
+  }
+
   @media (min-width: 768px) {
     header {
       clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);
@@ -82,6 +94,22 @@
 
     .intro {
       bottom: 50%;
+    }
+
+    .waves {
+      transform: translateY(1080px);
+    }
+  }
+
+  @media (min-width: 1750px) {
+    .waves {
+      transform: translateY(1300px);
+    }
+  }
+
+  @media (min-width: 2300px) {
+    .waves {
+      transform: translateY(1400px);
     }
   }
 
