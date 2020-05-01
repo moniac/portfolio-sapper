@@ -11,29 +11,19 @@
     position: relative;
   }
 
-  .wave1,
-  .wave2 {
-    width: 100vw;
-  }
-
-  .waves {
-    opacity: 0.6;
-    position: relative;
-    transform: translateY(1070px);
-  }
-
   .wave1 {
     position: absolute;
-    bottom: 0%;
+    bottom: -10%;
+    width: 100%;
     animation: wave 4s ease infinite alternate;
   }
 
   .wave2 {
     position: absolute;
-    bottom: 0%;
+    bottom: -10%;
+    width: 100%;
     animation: wave 2s ease infinite alternate, hue 5s ease infinite;
     animation-delay: 0.2s;
-    margin-bottom: 5rem;
   }
 
   .intro {
@@ -72,6 +62,10 @@
     filter: blur(8px);
   }
 
+  .waves {
+    opacity: 0.6;
+  }
+
   .logo_container {
     max-height: 52px;
     display: flex;
@@ -79,12 +73,6 @@
 
   :global(.logo_container > img) {
     max-height: 52px;
-  }
-
-  @media (min-width: 500px) {
-    .waves {
-      transform: translateY(1100px);
-    }
   }
 
   @media (min-width: 768px) {
@@ -96,20 +84,22 @@
       bottom: 50%;
     }
 
-    .waves {
-      transform: translateY(1080px);
+    .wave1 {
+      bottom: -10%;
+    }
+
+    .wave2 {
+      bottom: -10%;
     }
   }
 
-  @media (min-width: 1750px) {
-    .waves {
-      transform: translateY(1300px);
+  @media (min-width: 1350px) {
+    .wave1 {
+      bottom: -40%;
     }
-  }
 
-  @media (min-width: 2300px) {
-    .waves {
-      transform: translateY(1400px);
+    .wave2 {
+      bottom: -20%;
     }
   }
 
