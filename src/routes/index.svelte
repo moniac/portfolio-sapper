@@ -9,6 +9,9 @@
     height: 80vh;
     overflow: hidden;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
   .wave1 {
@@ -27,14 +30,20 @@
   }
 
   .intro {
-    position: absolute;
-    bottom: 10%;
+    /* position: absolute;
+    bottom: 10%; */
   }
 
   .figure-holder {
-    position: absolute;
+    /* position: absolute;
     right: 30%;
-    top: 30%;
+    top: 30%; */
+    display: flex;
+    margin-top: 4rem;
+  }
+
+  .figure-holder > * + * {
+    margin-left: 2rem;
   }
 
   .square {
@@ -51,19 +60,25 @@
   .triangle {
     opacity: 0.9;
     animation: hover 4s ease alternate infinite;
+    margin-top: 4rem;
   }
 
   .polygon {
     opacity: 0.9;
     animation: rotate 5s linear infinite reverse;
-    position: absolute;
-    left: -100px;
-    top: 0;
     filter: blur(8px);
+    width: 6rem;
+    transform-origin: 50% 80%;
+    height: 4rem;
   }
 
   .waves {
     opacity: 0.6;
+  }
+
+  .header-holder {
+    display: flex;
+    flex-direction: column;
   }
 
   .logo_container {
@@ -78,6 +93,16 @@
   @media (min-width: 768px) {
     header {
       clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);
+    }
+
+    .header-holder {
+      flex-direction: row;
+    }
+
+    .figure-holder {
+      margin-top: -10rem;
+      margin-right: 10rem;
+      margin-left: auto;
     }
 
     .intro {
@@ -187,33 +212,35 @@
       <h2>Front-end Developer</h2>
     </aside>
   </a>
-  <div class="px-10 intro text-white">
-    <h1 class="text-4xl leading-none mb-4">
-      <span class="font-bold text-6xl">Welcome</span>
-      <br />
-      to my portfolio
-    </h1>
-    <p class="max-w-lg">
-      I am Mohammed Mulazada, a Front-End Developer based in Amsterdam. With a
-      passion for all things web, I am looking for challenges and new things to
-      learn each and every day.
-    </p>
-  </div>
 
+  <div class="header-holder">
+    <div class="px-10 intro text-white">
+      <h1 class="text-4xl leading-none mb-4">
+        <span class="font-bold text-6xl">Welcome</span>
+        <br />
+        to my portfolio
+      </h1>
+      <p class="max-w-lg">
+        I am Mohammed Mulazada, a Front-End Developer based in Amsterdam. With a
+        passion for all things web, I am looking for challenges and new things
+        to learn each and every day.
+      </p>
+    </div>
+
+    <div class="figure-holder">
+      <figure class="square" />
+      <figure class="triangle">
+        <img alt="" src="./triangle.svg" />
+      </figure>
+      <figure class="polygon">
+        <img alt="" src="./polygon.svg" />
+      </figure>
+    </div>
+  </div>
   <figure class="waves">
     <img class="wave1" alt="" src="wave1.svg" />
     <img class="wave2" alt="" src="wave2.svg" />
   </figure>
-
-  <div class="figure-holder">
-    <figure class="square" />
-    <figure class="triangle">
-      <img alt="" src="./triangle.svg" />
-    </figure>
-    <figure class="polygon">
-      <img alt="" src="./polygon.svg" />
-    </figure>
-  </div>
 </header>
 
 <main class="px-10 py-16">
