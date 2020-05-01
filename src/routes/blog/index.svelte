@@ -9,8 +9,8 @@
 </script>
 
 <script>
-  export let posts;
   import GradientHeading from "../../components/GradientHeading.svelte";
+  export let posts;
 
   $: searchTerm = "";
   $: filteredPost = posts.filter(post =>

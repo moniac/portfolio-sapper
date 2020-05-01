@@ -4,6 +4,7 @@
     // this file is called [slug].svelte
     const res = await this.fetch(`blog/${params.slug}.json`);
     const data = await res.json();
+    console.log(params.slug);
 
     if (res.status === 200) {
       return { post: data };
@@ -220,6 +221,24 @@
         0 41.8px 33.4px rgba(0, 0, 0, 0.086), 0 0px 50px rgba(0, 0, 0, 0.12);
       border-radius: 4px;
       width: 100%;
+    }
+
+    .anchor {
+      position: relative;
+    }
+
+    .anchor > svg {
+      position: absolute;
+      left: 0;
+      transform: translateY(85%) translateX(-125%) rotate(-45deg);
+      transition: opacity 200ms ease, background-color 200ms ease 100ms;
+      opacity: 0;
+      background: none;
+    }
+
+    .anchor:hover > svg {
+      opacity: 0.75;
+      background: gray;
     }
   </style>
 </svelte:head>

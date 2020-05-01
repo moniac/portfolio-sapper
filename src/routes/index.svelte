@@ -43,8 +43,7 @@
     opacity: 0.4;
     transform: rotate(45deg);
     border: 10px solid #ffffff;
-    box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.5);
-    filter: blur(8px);
+    filter: blur(12px);
     animation: rotate 8s linear infinite;
     margin-left: 80px;
   }
@@ -56,7 +55,7 @@
 
   .polygon {
     opacity: 0.9;
-    animation: rotateStep 5s steps(1, end) infinite;
+    animation: rotate 5s linear infinite reverse;
     position: absolute;
     left: -100px;
     top: 0;
