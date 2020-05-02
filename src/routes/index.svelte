@@ -136,6 +136,16 @@
     }
   }
 
+  @media (min-width: 1200px) {
+    .wave1 {
+      bottom: -28%;
+    }
+
+    .wave2 {
+      bottom: -20%;
+    }
+  }
+
   @media (min-width: 2000px) {
     .wave1 {
       bottom: -45%;
