@@ -29,6 +29,11 @@
     animation-delay: 0.2s;
   }
 
+  .wave1,
+  .wave2 {
+    min-width: 1200px;
+  }
+
   .intro {
     /* position: absolute;
     bottom: 10%; */
@@ -78,7 +83,7 @@
 
   .header-holder {
     display: flex;
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
 
   .logo_container {
@@ -110,17 +115,7 @@
     }
 
     .wave1 {
-      bottom: -10%;
-    }
-
-    .wave2 {
-      bottom: -10%;
-    }
-  }
-
-  @media (min-width: 1350px) {
-    .wave1 {
-      bottom: -40%;
+      bottom: -45%;
     }
 
     .wave2 {
