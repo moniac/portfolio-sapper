@@ -19,6 +19,7 @@
     bottom: -25%;
     width: 100%;
     animation: wave 4s ease infinite alternate;
+    z-index: 1;
   }
 
   .wave2 {
@@ -27,6 +28,7 @@
     width: 100%;
     animation: wave 2s ease infinite alternate, hue 5s ease infinite;
     animation-delay: 0.2s;
+    z-index: 1;
   }
 
   .wave1,
@@ -45,9 +47,10 @@
     top: 30%; */
     display: flex;
     margin-top: 4rem;
+    z-index: 10;
   }
 
-  .figure-holder > * + * {
+  .figure-holder > * {
     margin-left: 2rem;
   }
 
@@ -60,6 +63,7 @@
     filter: blur(12px);
     animation: rotate 8s linear infinite;
     margin-left: 80px;
+    z-index: 1;
   }
 
   .triangle {
@@ -79,6 +83,7 @@
 
   .waves {
     opacity: 0.6;
+    z-index: 0;
   }
 
   .header-holder {
@@ -98,6 +103,7 @@
   @media (min-width: 768px) {
     header {
       clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);
+      min-height: 800px;
     }
 
     .header-holder {
@@ -105,21 +111,17 @@
     }
 
     .figure-holder {
-      margin-top: -10rem;
+      margin-top: -15rem;
       margin-right: 10rem;
       margin-left: auto;
     }
 
-    .intro {
-      bottom: 50%;
-    }
-
     .wave1 {
-      bottom: -20%;
+      bottom: -30%;
     }
 
     .wave2 {
-      bottom: -15%;
+      bottom: -25%;
     }
   }
 
