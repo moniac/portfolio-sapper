@@ -16,14 +16,14 @@
 
   .wave1 {
     position: absolute;
-    bottom: -10%;
+    bottom: -25%;
     width: 100%;
     animation: wave 4s ease infinite alternate;
   }
 
   .wave2 {
     position: absolute;
-    bottom: -10%;
+    bottom: -20%;
     width: 100%;
     animation: wave 2s ease infinite alternate, hue 5s ease infinite;
     animation-delay: 0.2s;
@@ -115,11 +115,21 @@
     }
 
     .wave1 {
+      bottom: -20%;
+    }
+
+    .wave2 {
+      bottom: -15%;
+    }
+  }
+
+  @media (min-width: 2000px) {
+    .wave1 {
       bottom: -45%;
     }
 
     .wave2 {
-      bottom: -20%;
+      bottom: -35%;
     }
   }
 
