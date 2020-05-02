@@ -39,6 +39,7 @@
   .intro {
     /* position: absolute;
     bottom: 10%; */
+    z-index: 99;
   }
 
   .figure-holder {
@@ -103,7 +104,7 @@
   @media (min-width: 768px) {
     header {
       clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);
-      min-height: 900px;
+      min-height: 800px;
     }
 
     .header-holder {
@@ -117,11 +118,21 @@
     }
 
     .wave1 {
-      bottom: -30%;
+      bottom: -20%;
     }
 
     .wave2 {
-      bottom: -25%;
+      bottom: -15%;
+    }
+  }
+
+  @media (min-width: 1000px) {
+    .wave1 {
+      bottom: -28%;
+    }
+
+    .wave2 {
+      bottom: -20%;
     }
   }
 
