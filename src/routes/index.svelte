@@ -16,7 +16,7 @@
 
   .wave1 {
     position: absolute;
-    bottom: -25%;
+    bottom: -30%;
     width: 100%;
     animation: wave 4s ease infinite alternate;
     z-index: 1;
@@ -128,11 +128,11 @@
 
   @media (min-width: 1000px) {
     .wave1 {
-      bottom: -28%;
+      bottom: -18%;
     }
 
     .wave2 {
-      bottom: -20%;
+      bottom: -10%;
     }
   }
 
