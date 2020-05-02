@@ -103,7 +103,7 @@
   @media (min-width: 768px) {
     header {
       clip-path: polygon(0 0, 100% 0, 100% 80%, 0% 100%);
-      min-height: 800px;
+      min-height: 900px;
     }
 
     .header-holder {
