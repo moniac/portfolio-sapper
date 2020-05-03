@@ -15,9 +15,28 @@
 </script>
 
 <script>
+  // import { onMount } from "svelte";
   import GradientHeading from "../../components/GradientHeading.svelte";
   export let post;
   console.log(post);
+
+  // onMount(() => {
+  //   (function() {
+  //     var pre = document.getElementsByTagName("pre"),
+  //       pl = pre.length;
+  //     for (var i = 0; i < pl; i++) {
+  //       pre[i].innerHTML =
+  //         '<span class="line-number"></span>' +
+  //         pre[i].innerHTML +
+  //         '<span class="cl"></span>';
+  //       var num = pre[i].innerHTML.split(/\n/).length;
+  //       for (var j = 0; j < num; j++) {
+  //         var line_num = pre[i].getElementsByTagName("span")[0];
+  //         line_num.innerHTML += "<span>" + (j + 1) + "</span>";
+  //       }
+  //     }
+  //   })();
+  // });
 </script>
 
 <style>
@@ -223,6 +242,11 @@
       width: 100%;
     }
 
+    .title-heading:hover .anchor > svg,
+    .title-heading:focus-within .anchor > svg {
+      opacity: 1;
+    }
+
     .anchor {
       position: relative;
     }
@@ -239,6 +263,10 @@
     .anchor:hover > svg {
       opacity: 0.75;
       background: gray;
+    }
+
+    html {
+      scroll-behavior: smooth;
     }
   </style>
 </svelte:head>
